@@ -1,13 +1,10 @@
-﻿using System.Diagnostics;
-using System.Linq;
-using System.Security.Cryptography;
-using Colossal.Logging;
-using Colossal.Mathematics;
+﻿using Colossal.Mathematics;
 using Game;
 using Game.Common;
 using Game.Net;
-using Game.Tools;
 using Game.Zones;
+using System.Diagnostics;
+using System.Linq;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
@@ -45,11 +42,6 @@ namespace ZoningToolkit.Systems
         private ModificationBarrier4B modificationBarrier4B;
         internal ZoningMode zoningMode;
 
-        public NativeQueue<Entity>.ReadOnly entitiesToUpdate
-        {
-            set { entitiesToUpdate = value; }
-            get { return entitiesToUpdate; }
-        }
 
         protected override void OnCreate()
         {
@@ -241,75 +233,43 @@ namespace ZoningToolkit.Systems
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                this.getLogger().Info("Executing UpdateZoningInfo Job.");
-                Stopwatch stopwatch = new Stopwatch();
+                var blocks = chunk.GetNativeArray(ref blockComponentTypeHandle);
+                var entities = chunk.GetNativeArray(entityTypeHandle);
+                var cellBufs = chunk.GetBufferAccessor(ref bufferTypeHandle);
+                var validAreas = chunk.GetNativeArray(ref validAreaComponentTypeHandle);
 
-                stopwatch.Start();
-                NativeArray<Block> blocks = chunk.GetNativeArray(ref this.blockComponentTypeHandle);
-                NativeArray<Entity> entities = chunk.GetNativeArray(this.entityTypeHandle);
-                BufferAccessor<Cell> cellBuffers = chunk.GetBufferAccessor(ref this.bufferTypeHandle);
-                NativeArray<ValidArea> validAreas = chunk.GetNativeArray(ref this.validAreaComponentTypeHandle);
-
-                foreach (var pair in entities.Select((item, index) => new { Item = item, Index = index }))
+                for (int i = 0; i < entities.Length; i++)
                 {
-                    Entity entity = pair.Item;
+                    var entity = entities[i];
+                    if (!ownerComponentLookup.HasComponent(entity)) continue;
 
-                    if (ownerComponentLookup.HasComponent(entity))
+                    var owner = ownerComponentLookup[entity];
+                    if (!zoningInfoComponentLookup.HasComponent(owner.m_Owner)) continue;
+                    if (!zoningInfoUpdateComponentLookup.HasComponent(entity)) continue;
+                    if (!curveComponentLookup.HasComponent(owner.m_Owner)) continue;
+
+                    var curve = curveComponentLookup[owner.m_Owner];
+                    var block = blocks[i];
+                    var cells = cellBufs[i];
+                    var validArea = validAreas[i];
+
+                    var dot = BlockUtils.blockCurveDotProduct(block, curve);
+                    var zi = zoningInfoComponentLookup[owner.m_Owner];
+
+                    if (!BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea))
                     {
-                        Owner owner = ownerComponentLookup[entity];
-
-                        ZoningInfo entityZoningInfo;
-
-                        if (zoningInfoComponentLookup.HasComponent(owner.m_Owner))
-                        {
-                            entityZoningInfo = zoningInfoComponentLookup[owner.m_Owner];
-
-                            this.getLogger().Info($"Found Zoning Info {entityZoningInfo}");
-
-                            if (zoningInfoUpdateComponentLookup.HasComponent(entity))
-                            {
-                                this.getLogger().Info("Found ZoningInfoUpdate component on owner.");
-
-                                Curve curve = curveComponentLookup[owner.m_Owner];
-                                Block block = blocks[pair.Index];
-                                this.getLogger().Info($"Processing Curve a: ${curve.m_Bezier.a}, b: ${curve.m_Bezier.b}, c: ${curve.m_Bezier.c}, d: ${curve.m_Bezier.d}, length: ${curve.m_Length}");
-                                this.getLogger().Info($"Entity is {entity}.");
-                                DynamicBuffer<Cell> cells = cellBuffers[pair.Index];
-                                ValidArea validArea = validAreas[pair.Index];
-                                this.getLogger().Info($"Block direction ${block.m_Direction}");
-                                this.getLogger().Info($"Block position ${block.m_Position}");
-                                this.getLogger().Info($"Valid Area: ${validArea.m_Area}");
-
-                                float dotProduct = BlockUtils.blockCurveDotProduct(block, curve);
-
-                                this.getLogger().Info($"Dot product: ${dotProduct}");
-                                this.getLogger().Info($"Zoning mode is ${entityZoningInfo.zoningMode}");
-
-                                if (BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea))
-                                {
-                                    // Can't replace occupied cells. So skip.
-                                    this.getLogger().Info("Cells are occupied. Replacing will not happen.");
-                                } else
-                                {
-                                    BlockUtils.editBlockSizes(dotProduct, entityZoningInfo, validArea, block, entity, entityCommandBuffer);
-
-                                    entityCommandBuffer.AddComponent(owner.m_Owner, entityZoningInfo);
-                                }
-                                
-                                entityCommandBuffer.RemoveComponent<ZoningInfoUpdated>(entity);
-                            }
-                        } else
-                        {
-                            this.getLogger().Info("Zoning Info Component not found.");
-                        }
-
-                        
+                        BlockUtils.editBlockSizes(dot, zi, validArea, block, entity, entityCommandBuffer);
+                        entityCommandBuffer.AddComponent(owner.m_Owner, zi);
                     }
+
+                    entityCommandBuffer.RemoveComponent<ZoningInfoUpdated>(entity);
                 }
             }
+
+
         }
 
-            // [BurstCompile]
+        // [BurstCompile]
         private struct UpdateZoneData : IJobChunk
         {
             [ReadOnly]
@@ -334,157 +294,74 @@ namespace ZoningToolkit.Systems
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                this.getLogger().Info("Executing Zone Adjustment Job.");
-                Stopwatch stopwatch = new Stopwatch();
-
-                stopwatch.Start();
-                NativeArray<Block> blocks = chunk.GetNativeArray(ref this.blockComponentTypeHandle);
-                NativeArray<Entity> entities = chunk.GetNativeArray(this.entityTypeHandle);
-                BufferAccessor<Cell> cellBuffers = chunk.GetBufferAccessor(ref this.bufferTypeHandle);
-                NativeArray<ValidArea> validAreas = chunk.GetNativeArray(ref this.validAreaComponentTypeHandle);
+                var blocks = chunk.GetNativeArray(ref blockComponentTypeHandle);
+                var entities = chunk.GetNativeArray(entityTypeHandle);
+                var cellBufs = chunk.GetBufferAccessor(ref bufferTypeHandle);
+                var validAreas = chunk.GetNativeArray(ref validAreaComponentTypeHandle);
 
                 if (chunk.Has(ref deletedTypeHandle))
-                {
-                    // Do nothing for deleted blocks.
                     return;
-                }
 
                 for (int i = 0; i < blocks.Length; i++)
                 {
-                    this.getLogger().Info("Processing entity.");
-                    Entity entity = entities[i];
-                    ZoningInfo entityZoningInfo = new ZoningInfo()
+                    var entity = entities[i];
+                    var zi = new ZoningInfo { zoningMode = zoningMode };
+
+                    if (!ownerComponentLookup.HasComponent(entity)) continue;
+                    var owner = ownerComponentLookup[entity];
+                    if (!curveComponentLookup.HasComponent(owner.m_Owner)) continue;
+                    var curve = curveComponentLookup[owner.m_Owner];
+
+                    if (!appliedLookup.HasComponent(owner.m_Owner))
                     {
-                        zoningMode = this.zoningMode
-                    };
-                    if (this.ownerComponentLookup.HasComponent(entity))
-                    {
-                        Owner owner = this.ownerComponentLookup[entity];
-
-                        if (this.curveComponentLookup.HasComponent(owner.m_Owner))
-                        {
-                            Curve curve = this.curveComponentLookup[owner.m_Owner];
-
-                            if (!appliedLookup.HasComponent(owner.m_Owner))
-                            {
-                                if (zoningInfoComponentLookup.HasComponent(owner.m_Owner))
-                                {
-                                    entityZoningInfo = this.zoningInfoComponentLookup[owner.m_Owner];
-                                }
-                                else
-                                {
-                                    // For backwards compatibility
-                                    entityZoningInfo = new ZoningInfo()
-                                    {
-                                        zoningMode = ZoningMode.Default
-                                    };
-                                }
-                            }
-                            else
-                            {
-                                Entity startDeletedEntity;
-                                Entity endDeletedEntity;
-                                bool isStartPresent = entitiesByStartPoint.TryGetValue(curve.m_Bezier.a.xz, out startDeletedEntity);
-                                bool isEndPresent = entitiesByEndPoint.TryGetValue(curve.m_Bezier.d.xz, out endDeletedEntity);
-
-                                if (isStartPresent && isEndPresent && startDeletedEntity == endDeletedEntity)
-                                {
-                                    this.getLogger().Info("Entity matches at start and end. This entity is probably a replacement.");
-                                    entityZoningInfo = zoningInfoComponentLookup[startDeletedEntity];
-
-                                } else if (isStartPresent && isEndPresent)
-                                {
-                                    this.getLogger().Info("Start and end deleted entity both present.");
-                                    Curve startCurve = curveComponentLookup[startDeletedEntity];
-                                    Curve endCurve = curveComponentLookup[endDeletedEntity];
-
-                                    if (startCurve.m_Bezier.d.x == endCurve.m_Bezier.a.x && startCurve.m_Bezier.d.z == endCurve.m_Bezier.a.z)
-                                    {
-                                        this.getLogger().Info("New curve matches deleted entity by start point & end point.");
-                                        // Deleted curve form the current complete curve.
-                                        ZoningInfo startZoningInfo = zoningInfoComponentLookup[startDeletedEntity];
-                                        ZoningInfo endZoningInfo = zoningInfoComponentLookup[endDeletedEntity];
-
-                                        if (startZoningInfo.Equals(endZoningInfo))
-                                        {
-                                            // If zoning is same, choose that.
-                                            this.getLogger().Info("Start and end curve zoning match.");
-                                            entityZoningInfo = startZoningInfo;
-                                        }
-                                        else
-                                        {
-                                            this.getLogger().Info("Start and end curve zoning don't match. Setting defaut zone.");
-                                            // Otherwise choose default zoning.
-                                            entityZoningInfo = new ZoningInfo()
-                                            {
-                                                zoningMode = ZoningMode.Default
-                                            };
-                                        }
-                                    }
-                                }
-                                else if (isEndPresent)
-                                {
-                                    this.getLogger().Info("New curve matches deleted entity by end point.");
-                                    if (zoningInfoComponentLookup.HasComponent(endDeletedEntity))
-                                    {
-                                        entityZoningInfo = zoningInfoComponentLookup[endDeletedEntity];
-                                    }
-                                }
-                                else if (isStartPresent)
-                                {
-                                    this.getLogger().Info("New curve matches deleted entity by start point.");
-                                    if (zoningInfoComponentLookup.HasComponent(startDeletedEntity))
-                                    {
-                                        entityZoningInfo = zoningInfoComponentLookup[startDeletedEntity];
-                                    }
-                                }
-
-
-                                if (zoningInfoComponentLookup.HasComponent(owner.m_Owner))
-                                {
-                                    entityZoningInfo = this.zoningInfoComponentLookup[owner.m_Owner];
-                                }
-                            }
-
-                            this.getLogger().Info($"Processing Curve a: ${curve.m_Bezier.a}, b: ${curve.m_Bezier.b}, c: ${curve.m_Bezier.c}, d: ${curve.m_Bezier.d}, length: ${curve.m_Length}");
-
-                            this.getLogger().Info($"Entity is {entity}.");
-
-                            Block block = blocks[i];
-                            DynamicBuffer<Cell> cells = cellBuffers[i];
-                            ValidArea validArea = validAreas[i];
-
-                            this.getLogger().Info($"Block direction ${block.m_Direction}");
-                            this.getLogger().Info($"Block position ${block.m_Position}");
-                            this.getLogger().Info($"Valid Area: ${validArea.m_Area}");
-
-                            float dotProduct = BlockUtils.blockCurveDotProduct(block, curve);
-
-                            this.getLogger().Info($"Dot product: ${dotProduct}");
-                            this.getLogger().Info($"Zoning mode is ${entityZoningInfo.zoningMode}");
-
-                            if (BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea))
-                            {
-                                // Can't replace occupied cells. So skip.
-                                this.getLogger().Info("Cells are occupied. Replacing will not happen.");
-                                continue;
-                            }
-
-                            BlockUtils.editBlockSizes(dotProduct, entityZoningInfo, validArea, block, entity, entityCommandBuffer);
-
-                            entityCommandBuffer.AddComponent(owner.m_Owner, entityZoningInfo);
-                        }
+                        zi = zoningInfoComponentLookup.HasComponent(owner.m_Owner)
+                            ? zoningInfoComponentLookup[owner.m_Owner]
+                            : new ZoningInfo { zoningMode = ZoningMode.Default };
                     }
+                    else
+                    {
+                        if (entitiesByStartPoint.TryGetValue(curve.m_Bezier.a.xz, out var s) &
+                            entitiesByEndPoint.TryGetValue(curve.m_Bezier.d.xz, out var e))
+                        {
+                            if (s == e && zoningInfoComponentLookup.HasComponent(s))
+                            {
+                                zi = zoningInfoComponentLookup[s];
+                            }
+                            else if (curveComponentLookup.HasComponent(s) && curveComponentLookup.HasComponent(e))
+                            {
+                                var sZI = zoningInfoComponentLookup.HasComponent(s) ? zoningInfoComponentLookup[s] : default;
+                                var eZI = zoningInfoComponentLookup.HasComponent(e) ? zoningInfoComponentLookup[e] : default;
+                                zi = (sZI.Equals(eZI)) ? sZI : new ZoningInfo { zoningMode = ZoningMode.Default };
+                            }
+                        }
+                        else if (entitiesByEndPoint.TryGetValue(curve.m_Bezier.d.xz, out var eOnly) &&
+                                 zoningInfoComponentLookup.HasComponent(eOnly))
+                        {
+                            zi = zoningInfoComponentLookup[eOnly];
+                        }
+                        else if (entitiesByStartPoint.TryGetValue(curve.m_Bezier.a.xz, out var sOnly) &&
+                                 zoningInfoComponentLookup.HasComponent(sOnly))
+                        {
+                            zi = zoningInfoComponentLookup[sOnly];
+                        }
+
+                        if (zoningInfoComponentLookup.HasComponent(owner.m_Owner))
+                            zi = zoningInfoComponentLookup[owner.m_Owner];
+                    }
+
+                    var block = blocks[i];
+                    var cells = cellBufs[i];
+                    var validArea = validAreas[i];
+
+                    var dot = BlockUtils.blockCurveDotProduct(block, curve);
+                    if (BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea))
+                        continue;
+
+                    BlockUtils.editBlockSizes(dot, zi, validArea, block, entity, entityCommandBuffer);
+                    entityCommandBuffer.AddComponent(owner.m_Owner, zi);
                 }
-
-                entities.Dispose();
-                blocks.Dispose();
-                validAreas.Dispose();
-
-                stopwatch.Stop();
-
-                this.getLogger().Info($"Job took ${stopwatch.ElapsedMilliseconds}");
             }
+
 
         }
         private struct CollectDeletedCurves : IJobChunk

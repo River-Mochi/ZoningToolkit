@@ -1,27 +1,17 @@
 ﻿using Game;
 using Game.Areas;
-using Game.Buildings;
 using Game.Common;
 using Game.Input;
 using Game.Net;
-using Game.Notifications;
-using Game.Objects;
 using Game.Prefabs;
-using Game.Routes;
 using Game.Tools;
-using Game.Vehicles;
 using Game.Zones;
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using UnityEngine.Scripting;
 using ZoningToolkit.Components;
-using ZoningToolkit.Utils;
-using static Colossal.IO.AssetDatabase.AtlasFrame;
 
 namespace ZoningToolkit
 {
@@ -224,7 +214,6 @@ namespace ZoningToolkit
         }
 
         // Fields related to the Tool System itself.
-        private ProxyAction _applyAction;
         private DisplayNameOverride applyActionNameOverride;
         private ToolOutputBarrier toolOutputBarrier;
         private NetToolSystem netToolSystem;
@@ -245,6 +234,7 @@ namespace ZoningToolkit
 
             this.typeHandle.__AssignHandles(ref this.CheckedStateRef);
         }
+
         protected override void OnCreate()
         {
             this.getLogger().Info($"Creating {toolID}.");
@@ -252,27 +242,27 @@ namespace ZoningToolkit
 
             this.Enabled = false;
 
-            this._applyAction = GameUtils.CopyGameAction("Apply", ModSettings.ApplyActionName, nameof(UnityEngine.InputSystem.Mouse)); 
-            // this.cancelAction = GameUtils.CopyGameAction("Cancel", ModSettings.CancelActionName, nameof(UnityEngine.InputSystem.Key));
-            this.applyActionNameOverride = new DisplayNameOverride(nameof(ZoningToolkitModToolSystem), this._applyAction, "Updated Zoning Side", 20);
+            // Use the built-in Apply action from ToolBaseSystem (no CopyGameAction).
+            this.applyActionNameOverride =
+                new DisplayNameOverride(nameof(ZoningToolkitModToolSystem), this.applyAction, "Updated Zoning Side", 20);
 
             this.toolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
             this.netToolSystem = World.GetOrCreateSystemManaged<NetToolSystem>();
             this.toolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
             this.toolEnabled = false;
+
             this.toolStateMachine = new ZoningToolkitModToolSystemStateMachine(
                 new Dictionary<(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next), StateCallback>
                 {
-                    { (ZoningToolkitModToolSystemState.Default, ZoningToolkitModToolSystemState.Selected), this.entityHighlighted },
-                    { (ZoningToolkitModToolSystemState.Default, ZoningToolkitModToolSystemState.Default), this.hoverUpdate },
-                    { (ZoningToolkitModToolSystemState.Default, ZoningToolkitModToolSystemState.Selecting), this.startDragSelecting },
-                    { (ZoningToolkitModToolSystemState.Selecting, ZoningToolkitModToolSystemState.Selecting), this.keepDragging },
-                    { (ZoningToolkitModToolSystemState.Selecting, ZoningToolkitModToolSystemState.Selected), this.stopDragging },
-
+            { (ZoningToolkitModToolSystemState.Default,   ZoningToolkitModToolSystemState.Selected),  this.entityHighlighted },
+            { (ZoningToolkitModToolSystemState.Default,   ZoningToolkitModToolSystemState.Default),   this.hoverUpdate       },
+            { (ZoningToolkitModToolSystemState.Default,   ZoningToolkitModToolSystemState.Selecting), this.startDragSelecting},
+            { (ZoningToolkitModToolSystemState.Selecting, ZoningToolkitModToolSystemState.Selecting), this.keepDragging      },
+            { (ZoningToolkitModToolSystemState.Selecting, ZoningToolkitModToolSystemState.Selected),  this.stopDragging      },
                 }
             );
 
-            // Try to find existing reference from tool system tool list.
+            // Ensure this tool is registered once in the tool list
             List<ToolBaseSystem> toolList = this.toolSystem.tools;
             ToolBaseSystem thisSystem = null;
             foreach (ToolBaseSystem tool in toolList)
@@ -285,17 +275,13 @@ namespace ZoningToolkit
                     continue;
                 }
             }
-
-            // Remove existing tool reference.
             if (thisSystem != null)
-            {
                 toolList.Remove(this);
-            }
-
             toolList.Add(this);
 
             this.getLogger().Info($"Done Creating {toolID}.");
         }
+
 
         private JobHandle stopDragging(ZoningToolkitModToolSystemState previousState, ZoningToolkitModToolSystemState nextState)
         {
@@ -422,7 +408,7 @@ namespace ZoningToolkit
             base.OnStartRunning();
             this.toolEnabled = true;
 
-            this._applyAction.shouldBeEnabled = true;
+            this.applyAction.enabled = true;
             this.onUpdateMemory = default;
             this.workingState.lastRaycastEntity = Entity.Null;
             this.workingState.lastRaycastEntities = new NativeHashSet<Entity>(32, Allocator.Persistent);
@@ -433,7 +419,8 @@ namespace ZoningToolkit
         {
             this.getLogger().Info($"Stopped running tool {toolID}");
             base.OnStopRunning();
-            this._applyAction.shouldBeEnabled = false;
+            if (this.workingState.lastRaycastEntities.IsCreated)
+                this.workingState.lastRaycastEntities.Dispose();
             this.toolEnabled = false;
             this.workingState.lastRaycastEntities.Dispose();
             this.onUpdateMemory.currentInputDeps.Complete();
@@ -450,15 +437,15 @@ namespace ZoningToolkit
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (this.m_FocusChanged)
+            if (this.m_FocusChanged || !this.toolEnabled)
                 return inputDeps;
 
             this.applyMode = ApplyMode.Clear;
 
             base.requireZones = true;
             base.requireAreas |= AreaTypeMask.Lots;
-            this.getLogger().Info($"Apply Action enabled: {this._applyAction.enabled}");
-            this.getLogger().Info($"Apply Action: {this._applyAction.WasPressedThisFrame()}");
+            this.getLogger().Info($"Apply Action enabled: {this.applyAction.enabled}");
+            this.getLogger().Info($"Apply Action: {this.applyAction.WasPressedThisFrame()}");
             if (this.GetPrefab() != null)
             {
                 this.UpdateInfoview(this.m_ToolSystem.actionMode.IsEditor() ? Entity.Null : this.m_PrefabSystem.GetEntity(this.GetPrefab()));
@@ -470,8 +457,8 @@ namespace ZoningToolkit
                 commandBufferSystem = this.toolOutputBarrier.CreateCommandBuffer()
             };
 
-            this.applyMode = this.toolStateMachine.transition(_applyAction);
 
+            this.applyMode = this.toolStateMachine.transition(this.applyAction);
             this.toolOutputBarrier.AddJobHandleForProducer(this.onUpdateMemory.currentInputDeps);
             return this.onUpdateMemory.currentInputDeps;
         }

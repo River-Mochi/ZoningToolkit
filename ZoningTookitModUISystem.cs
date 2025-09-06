@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using Colossal.UI.Binding;
 using Game;
 using Game.Prefabs;
@@ -9,7 +8,6 @@ using Game.UI;
 using Unity.Collections;
 using Unity.Entities;
 using ZoningToolkit.Components;
-using ZoningToolkit.Utils;
 
 namespace ZoningToolkit.Systems
 {
@@ -148,7 +146,33 @@ namespace ZoningToolkit.Systems
         {
             base.OnUpdate();
 
-            // Update Tool and System info from UI
+            // BEGIN: apply pending UI state changes
+            if (activateModUI)
+            {
+                activateModUI = false;
+                if (!uiState.visible)
+                {
+                    uiState.visible = true;
+                    // If UISystemBase has a way to force a refresh, can call it here.
+                    // this.MarkDirty(this);
+                }
+            }
+
+            if (deactivateModUI)
+            {
+                deactivateModUI = false;
+                if (uiState.visible)
+                {
+                    uiState.visible = false;
+                    // Safety: if we hide the panel because prefab is not a zoning road, also disable the tool.
+                    if (zoningToolkitModToolSystem.toolEnabled)
+                        zoningToolkitModToolSystem.DisableTool();
+                    // Same note as above: a forced UI refresh is optional.
+                }
+            }
+            // --- END: apply pending UI state changes ---
+
+            // Update Tool and System info from UI (keep original logic below)
             if (this.uiState.zoningMode != this.zoningToolkitModToolSystem.workingState.zoningMode)
             {
                 this.getLogger().Info("Updating Tool System Zoning mode");
@@ -165,7 +189,8 @@ namespace ZoningToolkit.Systems
             {
                 this.getLogger().Info("Syncing Enabling/Disabling tool status");
                 this.uiState.toolEnabled = this.zoningToolkitModToolSystem.toolEnabled;
-                toolEnabledBinding.TriggerUpdate();
+                // If keep toolEnabledBinding, then push it here:
+                // toolEnabledBinding.TriggerUpdate();
             }
         }
     }
