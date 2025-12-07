@@ -67,7 +67,7 @@ namespace ZoningToolkit.Systems
             // JS -> C# triggers
             AddBinding(new TriggerBinding<string>(kGroup, "zoning_mode_update", zoningModeString =>
             {
-                if (Enum.TryParse<ZoningMode>(zoningModeString, out var mode))
+                if (Enum.TryParse<ZoningMode>(zoningModeString, out ZoningMode mode))
                 {
                     Mod.s_Log.Info($"ZoneTools UI: zoning mode updated to {mode}");
                     m_UIState.zoningMode = mode;
@@ -152,7 +152,7 @@ namespace ZoningToolkit.Systems
             // Sync UI state -> systems
             if (m_UIState.zoningMode != m_Tool.workingState.zoningMode)
             {
-                var ws = m_Tool.workingState;
+                ZoningToolkitModToolSystem.WorkingState ws = m_Tool.workingState;
                 ws.zoningMode = m_UIState.zoningMode;
                 m_Tool.workingState = ws;
             }

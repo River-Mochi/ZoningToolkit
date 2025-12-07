@@ -1,6 +1,7 @@
 // Systems/ZoningToolkitModToolSystem.cs
+// Interactive zoning update tool: hover, click, drag-select existing roads and apply ZoneTools zoning modes.
 
-namespace ZoningToolkit
+namespace ZoningToolkit.Systems
 {
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
@@ -12,126 +13,221 @@ namespace ZoningToolkit
     using Game.Prefabs;
     using Game.Tools;
     using Game.Zones;
+    using Unity.Collections;
     using Unity.Entities;
     using Unity.Jobs;
     using UnityEngine;
     using ZoningToolkit.Components;
+    using ZoningToolkit.Utils;
 
-    // Job: highlight a net entity (and its edge endpoints)
+    /// <summary>
+    /// Job: mark a road entity (and its edge endpoints) as highlighted + updated.
+    /// </summary>
     public struct HighlightEntitiesJob : IJob
     {
-        public EntityCommandBuffer commandBuffer;
-        public Entity entityToHighlight;
-        public ComponentLookup<Edge> edgeLookup;
+        public EntityCommandBuffer CommandBuffer;
+        public Entity EntityToHighlight;
+        public ComponentLookup<Edge> EdgeLookup;
 
         public void Execute()
         {
-            if (entityToHighlight == Entity.Null)
-                return;
+            CommandBuffer.AddComponent<Highlighted>(EntityToHighlight);
+            CommandBuffer.AddComponent<Updated>(EntityToHighlight);
 
-            commandBuffer.AddComponent<Highlighted>(entityToHighlight);
-            commandBuffer.AddComponent<Updated>(entityToHighlight);
-
-            if (edgeLookup.HasComponent(entityToHighlight))
+            if (EdgeLookup.HasComponent(EntityToHighlight))
             {
-                Edge edge = edgeLookup[entityToHighlight];
-                commandBuffer.AddComponent<Updated>(edge.m_Start);
-                commandBuffer.AddComponent<Updated>(edge.m_End);
+                Edge edge = EdgeLookup[EntityToHighlight];
+                CommandBuffer.AddComponent<Updated>(edge.m_Start);
+                CommandBuffer.AddComponent<Updated>(edge.m_End);
             }
         }
     }
 
-    // Job: remove highlight from net entity (and mark endpoints updated)
+    /// <summary>
+    /// Job: remove highlight from a road entity (and update its endpoints).
+    /// </summary>
     public struct UnHighlightEntitiesJob : IJob
     {
-        public EntityCommandBuffer commandBuffer;
-        public Entity entityToUnhighlight;
-        public ComponentLookup<Edge> edgeLookup;
+        public EntityCommandBuffer CommandBuffer;
+        public Entity EntityToUnhighlight;
+        public ComponentLookup<Edge> EdgeLookup;
 
         public void Execute()
         {
-            if (entityToUnhighlight == Entity.Null)
-                return;
+            CommandBuffer.RemoveComponent<Highlighted>(EntityToUnhighlight);
+            CommandBuffer.AddComponent<Updated>(EntityToUnhighlight);
 
-            commandBuffer.RemoveComponent<Highlighted>(entityToUnhighlight);
-            commandBuffer.AddComponent<Updated>(entityToUnhighlight);
-
-            if (edgeLookup.HasComponent(entityToUnhighlight))
+            if (EdgeLookup.HasComponent(EntityToUnhighlight))
             {
-                Edge edge = edgeLookup[entityToUnhighlight];
-                commandBuffer.AddComponent<Updated>(edge.m_Start);
-                commandBuffer.AddComponent<Updated>(edge.m_End);
+                Edge edge = EdgeLookup[EntityToUnhighlight];
+                CommandBuffer.AddComponent<Updated>(edge.m_Start);
+                CommandBuffer.AddComponent<Updated>(edge.m_End);
             }
         }
     }
 
-    // Job: apply ZoningInfo to a single net entity and mark its blocks for update
-    public struct ApplyZoningInfoJob : IJob
+    /// <summary>
+    /// Job: for older saves that don't have ZoningInfo, infer zoning from existing blocks.
+    /// </summary>
+    public struct BackwardsCompatibilityZoningInfo : IJob
     {
-        public Entity entity;
-
-        public ComponentLookup<Curve> curveLookup;
-        public ComponentLookup<ZoningInfo> zoningLookup;
-        public BufferLookup<SubBlock> subBlockLookup;
-        public ComponentLookup<Edge> edgeLookup;
-
-        public EntityCommandBuffer ecb;
-        public ZoningInfo newZoningInfo;
+        public Entity BackwardsCompatibilityEntity;
+        public ComponentLookup<Curve> CurveLookup;
+        public ComponentLookup<ZoningInfo> ZoningInfoLookup;
+        public BufferLookup<SubBlock> SubBlockBufferLookup;
+        public ComponentLookup<Block> BlockLookup;
+        public EntityCommandBuffer CommandBuffer;
 
         public void Execute()
         {
-            if (entity == Entity.Null)
-                return;
-
-            if (curveLookup.HasComponent(entity))
+            // Already has ZoningInfo -> nothing to do.
+            if (ZoningInfoLookup.HasComponent(BackwardsCompatibilityEntity))
             {
-                ecb.AddComponent(entity, newZoningInfo);
+                return;
+            }
 
-                if (subBlockLookup.HasBuffer(entity))
+            if (!CurveLookup.HasComponent(BackwardsCompatibilityEntity))
+            {
+                return;
+            }
+
+            Curve curve = CurveLookup[BackwardsCompatibilityEntity];
+            bool leftBlock = false;
+            bool rightBlock = false;
+
+            if (SubBlockBufferLookup.HasBuffer(BackwardsCompatibilityEntity))
+            {
+                DynamicBuffer<SubBlock> subBlocks = SubBlockBufferLookup[BackwardsCompatibilityEntity];
+
+                foreach (SubBlock item in subBlocks)
                 {
-                    DynamicBuffer<SubBlock> buffer = subBlockLookup[entity];
-                    foreach (var sb in buffer)
+                    Block block = BlockLookup[item.m_SubBlock];
+                    float dot = BlockUtils.blockCurveDotProduct(block, curve);
+
+                    if (dot > 0f)
                     {
-                        ecb.AddComponent<ZoningInfoUpdated>(sb.m_SubBlock);
+                        // Left side.
+                        if (block.m_Size.y > 0)
+                        {
+                            leftBlock = true;
+                        }
+                    }
+                    else
+                    {
+                        // Right side.
+                        if (block.m_Size.y > 0)
+                        {
+                            rightBlock = true;
+                        }
                     }
                 }
             }
 
-            // Clear highlight and mark updated for visual refresh
-            ecb.RemoveComponent<Highlighted>(entity);
-            ecb.AddComponent<Updated>(entity);
-
-            if (edgeLookup.HasComponent(entity))
+            ZoningMode mode;
+            if (leftBlock && rightBlock)
             {
-                Edge edge = edgeLookup[entity];
-                ecb.AddComponent<Updated>(edge.m_Start);
-                ecb.AddComponent<Updated>(edge.m_End);
+                mode = ZoningMode.Default;
             }
+            else if (rightBlock)
+            {
+                mode = ZoningMode.Right;
+            }
+            else if (leftBlock)
+            {
+                mode = ZoningMode.Left;
+            }
+            else
+            {
+                mode = ZoningMode.None;
+            }
+
+            CommandBuffer.AddComponent(
+                BackwardsCompatibilityEntity,
+                new ZoningInfo { zoningMode = mode });
         }
     }
 
-    // Tool that lets the player apply a zoning mode to existing roads.
-    public partial class ZoningToolkitModToolSystem : ToolBaseSystem
+    /// <summary>
+    /// Job: apply a new ZoningInfo to all selected entities and mark blocks for update.
+    /// </summary>
+    public struct UpdateZoningInfo : IJob
     {
-        // Helper struct for per-frame state
+        public NativeHashSet<Entity> EntitySet;
+        public ComponentLookup<Curve> CurveLookup;
+        public ComponentLookup<ZoningInfo> ZoningInfoLookup;
+        public BufferLookup<SubBlock> SubBlockBufferLookup;
+        public ComponentLookup<Edge> EdgeLookup;
+        public EntityCommandBuffer CommandBuffer;
+        public ZoningInfo NewZoningInfo;
+
+        public void Execute()
+        {
+            NativeArray<Entity> entities = EntitySet.ToNativeArray(Allocator.TempJob);
+
+            foreach (Entity entity in entities)
+            {
+                if (CurveLookup.HasComponent(entity))
+                {
+                    // Apply zoning info to the road entity.
+                    CommandBuffer.AddComponent(entity, NewZoningInfo);
+
+                    // Mark all sub-blocks as needing re-zoning.
+                    if (SubBlockBufferLookup.HasBuffer(entity))
+                    {
+                        DynamicBuffer<SubBlock> subBlocks = SubBlockBufferLookup[entity];
+                        foreach (SubBlock sub in subBlocks)
+                        {
+                            CommandBuffer.AddComponent<ZoningInfoUpdated>(sub.m_SubBlock);
+                        }
+                    }
+                }
+
+                // Remove highlight and mark road as updated.
+                CommandBuffer.RemoveComponent<Highlighted>(entity);
+                CommandBuffer.AddComponent<Updated>(entity);
+
+                // Also mark edge endpoints as updated, if any.
+                if (EdgeLookup.HasComponent(entity))
+                {
+                    Edge edge = EdgeLookup[entity];
+                    CommandBuffer.AddComponent<Updated>(edge.m_Start);
+                    CommandBuffer.AddComponent<Updated>(edge.m_End);
+                }
+            }
+
+            entities.Dispose();
+            EntitySet.Clear();
+        }
+    }
+
+    /// <summary>
+    /// Main ZoneTools "update existing roads" tool.
+    /// </summary>
+    internal sealed partial class ZoningToolkitModToolSystem : ToolBaseSystem
+    {
+        /// <summary>
+        /// Per-frame scratch data (jobs & ECB).
+        /// </summary>
         private struct OnUpdateMemory
         {
-            public JobHandle currentInputDeps;
-            public EntityCommandBuffer commandBufferSystem;
+            public JobHandle CurrentInputDeps;
+            public EntityCommandBuffer CommandBuffer;
         }
 
-        // Persistent tool state
+        /// <summary>
+        /// State kept while the tool is active.
+        /// </summary>
         internal struct WorkingState
         {
             internal Entity lastRaycastEntity;
+            internal NativeHashSet<Entity> lastRaycastEntities;
             internal ZoningMode zoningMode;
         }
 
         private ToolOutputBarrier m_ToolOutputBarrier = null!;
-        private ToolSystem m_ToolSystem = null!;
-        private ToolBaseSystem? m_PreviousToolSystem;
         private NetToolSystem m_NetToolSystem = null!;
-
+        private ToolBaseSystem? m_PreviousToolSystem;
+        private ZoningToolkitModToolSystemStateMachine m_StateMachine = null!;
         private TypeHandle m_TypeHandle;
         private OnUpdateMemory m_OnUpdateMemory;
 
@@ -151,23 +247,34 @@ namespace ZoningToolkit
 
         protected override void OnCreate()
         {
-            Mod.s_Log.Info($"Creating {toolID}");
+            Mod.s_Log.Info($"Creating {toolID}.");
             base.OnCreate();
 
             Enabled = false;
 
-            // Use the built-in Apply action from ToolBaseSystem.
-            _ = new DisplayNameOverride(nameof(ZoningToolkitModToolSystem), applyAction, "ZoneTools Apply", 20);
-
+            // CO-style system lookups
             m_ToolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
             m_NetToolSystem = World.GetOrCreateSystemManaged<NetToolSystem>();
-            m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
+            m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>(); // base field from ToolBaseSystem
 
             toolEnabled = false;
+
             workingState.lastRaycastEntity = Entity.Null;
+            workingState.lastRaycastEntities = default;
             workingState.zoningMode = ZoningMode.Default;
 
-            // Ensure this tool appears once in the tool list
+            // Simple click / drag state machine using IProxyAction (see Mod_Key_Binding wiki).
+            m_StateMachine = new ZoningToolkitModToolSystemStateMachine(
+                new Dictionary<(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next), StateCallback>
+                {
+                    { (ZoningToolkitModToolSystemState.Default,   ZoningToolkitModToolSystemState.Selected),  EntityHighlighted },
+                    { (ZoningToolkitModToolSystemState.Default,   ZoningToolkitModToolSystemState.Default),   HoverUpdate      },
+                    { (ZoningToolkitModToolSystemState.Default,   ZoningToolkitModToolSystemState.Selecting), StartDragSelect  },
+                    { (ZoningToolkitModToolSystemState.Selecting, ZoningToolkitModToolSystemState.Selecting), KeepDragSelect   },
+                    { (ZoningToolkitModToolSystemState.Selecting, ZoningToolkitModToolSystemState.Selected),  StopDragSelect   },
+                });
+
+            // Ensure the tool is registered only once.
             List<ToolBaseSystem> tools = m_ToolSystem.tools;
             ToolBaseSystem? existing = null;
             foreach (ToolBaseSystem tool in tools)
@@ -185,7 +292,7 @@ namespace ZoningToolkit
             }
             tools.Add(this);
 
-            Mod.s_Log.Info($"Done creating {toolID}");
+            Mod.s_Log.Info($"Done creating {toolID}.");
         }
 
         protected override void OnStartRunning()
@@ -194,9 +301,11 @@ namespace ZoningToolkit
             base.OnStartRunning();
 
             toolEnabled = true;
-            applyAction.enabled = true;
+
             m_OnUpdateMemory = default;
             workingState.lastRaycastEntity = Entity.Null;
+            workingState.lastRaycastEntities = new NativeHashSet<Entity>(32, Allocator.Persistent);
+            m_StateMachine.Reset();
         }
 
         protected override void OnStopRunning()
@@ -204,9 +313,15 @@ namespace ZoningToolkit
             Mod.s_Log.Info($"Stopped running tool {toolID}");
             base.OnStopRunning();
 
-            m_OnUpdateMemory.currentInputDeps.Complete();
             toolEnabled = false;
-            workingState.lastRaycastEntity = Entity.Null;
+
+            if (workingState.lastRaycastEntities.IsCreated)
+            {
+                workingState.lastRaycastEntities.Dispose();
+            }
+
+            // Make sure any outstanding jobs are completed.
+            m_OnUpdateMemory.CurrentInputDeps.Complete();
         }
 
         public override void InitializeRaycast()
@@ -220,129 +335,42 @@ namespace ZoningToolkit
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
+            // If focus changed or the tool isn't active, do nothing.
             if (m_FocusChanged || !toolEnabled)
+            {
                 return inputDeps;
+            }
 
             applyMode = ApplyMode.Clear;
 
             requireZones = true;
             requireAreas |= AreaTypeMask.Lots;
 
-            if (GetPrefab() != null)
-            {
-                UpdateInfoview(m_ToolSystem.actionMode.IsEditor()
-                    ? Entity.Null
-                    : m_PrefabSystem.GetEntity(GetPrefab()));
-            }
-
+            // Keep component lookups fresh.
             m_TypeHandle.__UpdateComponents(ref CheckedStateRef);
+
             m_OnUpdateMemory = new OnUpdateMemory
             {
-                currentInputDeps = inputDeps,
-                commandBufferSystem = m_ToolOutputBarrier.CreateCommandBuffer()
+                CurrentInputDeps = inputDeps,
+                CommandBuffer = m_ToolOutputBarrier.CreateCommandBuffer()
             };
 
-            // 1) Hover highlight
-            HandleHoverHighlight();
+            // Drive the state machine using the built-in apply action (IProxyAction).
+            applyMode = m_StateMachine.Transition(applyAction);
 
-            // 2) Apply when user clicks (on mouse release)
-            if (applyAction.WasReleasedThisFrame())
-            {
-                ApplyZoningToCurrentEntity();
-            }
-
-            m_ToolOutputBarrier.AddJobHandleForProducer(m_OnUpdateMemory.currentInputDeps);
-            return m_OnUpdateMemory.currentInputDeps;
-        }
-
-        private void HandleHoverHighlight()
-        {
-            Entity previous = workingState.lastRaycastEntity;
-
-            if (GetRaycastResult(out Entity hitEntity, out RaycastHit _))
-            {
-                if (hitEntity != previous)
-                {
-                    // Unhighlight previous
-                    if (previous != Entity.Null)
-                    {
-                        var unhighlightJob = new UnHighlightEntitiesJob
-                        {
-                            commandBuffer = m_OnUpdateMemory.commandBufferSystem,
-                            entityToUnhighlight = previous,
-                            edgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup
-                        }.Schedule(m_OnUpdateMemory.currentInputDeps);
-
-                        m_OnUpdateMemory.currentInputDeps =
-                            JobHandle.CombineDependencies(m_OnUpdateMemory.currentInputDeps, unhighlightJob);
-                    }
-
-                    // Highlight new
-                    workingState.lastRaycastEntity = hitEntity;
-
-                    var highlightJob = new HighlightEntitiesJob
-                    {
-                        commandBuffer = m_OnUpdateMemory.commandBufferSystem,
-                        entityToHighlight = workingState.lastRaycastEntity,
-                        edgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup
-                    }.Schedule(m_OnUpdateMemory.currentInputDeps);
-
-                    m_OnUpdateMemory.currentInputDeps =
-                        JobHandle.CombineDependencies(m_OnUpdateMemory.currentInputDeps, highlightJob);
-                }
-            }
-            else
-            {
-                // No hit – clear previous highlight if any
-                if (previous != Entity.Null)
-                {
-                    workingState.lastRaycastEntity = Entity.Null;
-
-                    var unhighlightJob = new UnHighlightEntitiesJob
-                    {
-                        commandBuffer = m_OnUpdateMemory.commandBufferSystem,
-                        entityToUnhighlight = previous,
-                        edgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup
-                    }.Schedule(m_OnUpdateMemory.currentInputDeps);
-
-                    m_OnUpdateMemory.currentInputDeps =
-                        JobHandle.CombineDependencies(m_OnUpdateMemory.currentInputDeps, unhighlightJob);
-                }
-            }
-        }
-
-        private void ApplyZoningToCurrentEntity()
-        {
-            Entity entity = workingState.lastRaycastEntity;
-            if (entity == Entity.Null)
-                return;
-
-            Mod.s_Log.Info($"Applying zoning mode {workingState.zoningMode} to entity {entity}");
-
-            var job = new ApplyZoningInfoJob
-            {
-                entity = entity,
-                curveLookup = m_TypeHandle.__Game_Net_Curve_RW_ComponentLookup,
-                zoningLookup = m_TypeHandle.__Game_Zoning_Info_RW_ComponentLookup,
-                subBlockLookup = m_TypeHandle.__Game_SubBlock_RW_BufferLookup,
-                edgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup,
-                ecb = m_OnUpdateMemory.commandBufferSystem,
-                newZoningInfo = new ZoningInfo { zoningMode = workingState.zoningMode }
-            }.Schedule(m_OnUpdateMemory.currentInputDeps);
-
-            m_OnUpdateMemory.currentInputDeps =
-                JobHandle.CombineDependencies(m_OnUpdateMemory.currentInputDeps, job);
-
-            applyMode = ApplyMode.Apply;
+            m_ToolOutputBarrier.AddJobHandleForProducer(m_OnUpdateMemory.CurrentInputDeps);
+            return m_OnUpdateMemory.CurrentInputDeps;
         }
 
         public override PrefabBase GetPrefab()
         {
+            // Tool doesn't use a prefab directly; returning null is OK in practice.
             return null!;
         }
 
         public override bool TrySetPrefab(PrefabBase prefab)
         {
+            // No prefab selection support for this tool.
             return false;
         }
 
@@ -361,15 +389,156 @@ namespace ZoningToolkit
             if (toolEnabled)
             {
                 toolEnabled = false;
-                if (m_ToolSystem.activeTool == this)
+
+                if (m_ToolSystem.activeTool == this && m_PreviousToolSystem != null)
                 {
                     m_ToolSystem.activeTool = m_PreviousToolSystem;
                 }
             }
         }
 
+        // --- State-machine callbacks --------------------------------------------------------
+
+        private JobHandle StopDragSelect(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        {
+            JobHandle job = new UpdateZoningInfo
+            {
+                CurveLookup = m_TypeHandle.__Game_Net_Curve_RW_ComponentLookup,
+                ZoningInfoLookup = m_TypeHandle.__Game_Zoning_Info_RW_ComponentLookup,
+                CommandBuffer = m_OnUpdateMemory.CommandBuffer,
+                EntitySet = workingState.lastRaycastEntities,
+                SubBlockBufferLookup = m_TypeHandle.__Game_SubBlock_RW_BufferLookup,
+                EdgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup,
+                NewZoningInfo = new ZoningInfo
+                {
+                    zoningMode = workingState.zoningMode
+                }
+            }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
+
+            m_OnUpdateMemory.CurrentInputDeps = JobHandle.CombineDependencies(m_OnUpdateMemory.CurrentInputDeps, job);
+            return m_OnUpdateMemory.CurrentInputDeps;
+        }
+
+        private JobHandle HoverUpdate(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        {
+            EntityHighlighted(previous, next);
+            return m_OnUpdateMemory.CurrentInputDeps;
+        }
+
+        private JobHandle StartDragSelect(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        {
+            SelectEntity(previous, next);
+            return m_OnUpdateMemory.CurrentInputDeps;
+        }
+
+        private JobHandle KeepDragSelect(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        {
+            SelectEntity(previous, next);
+            return m_OnUpdateMemory.CurrentInputDeps;
+        }
+
+        private JobHandle SelectEntity(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        {
+            if (GetRaycastResult(out Entity entity, out RaycastHit _))
+            {
+                if (!workingState.lastRaycastEntities.Contains(entity))
+                {
+                    workingState.lastRaycastEntities.Add(entity);
+
+                    JobHandle job = new HighlightEntitiesJob
+                    {
+                        EntityToHighlight = entity,
+                        CommandBuffer = m_OnUpdateMemory.CommandBuffer,
+                        EdgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup
+                    }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
+
+                    m_OnUpdateMemory.CurrentInputDeps =
+                        JobHandle.CombineDependencies(job, m_OnUpdateMemory.CurrentInputDeps);
+                }
+            }
+
+            return m_OnUpdateMemory.CurrentInputDeps;
+        }
+
+        private JobHandle EntityHighlighted(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        {
+            Entity previousEntity = workingState.lastRaycastEntity;
+
+            if (GetRaycastResult(out Entity hitEntity, out RaycastHit _))
+            {
+                if (workingState.lastRaycastEntity != hitEntity)
+                {
+                    // Unhighlight previous.
+                    if (previousEntity != Entity.Null)
+                    {
+                        JobHandle unhighlight = new UnHighlightEntitiesJob
+                        {
+                            CommandBuffer = m_OnUpdateMemory.CommandBuffer,
+                            EntityToUnhighlight = previousEntity,
+                            EdgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup
+                        }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
+
+                        m_OnUpdateMemory.CurrentInputDeps =
+                            JobHandle.CombineDependencies(unhighlight, m_OnUpdateMemory.CurrentInputDeps);
+                    }
+
+                    // Highlight new.
+                    workingState.lastRaycastEntity = hitEntity;
+
+                    JobHandle highlight = new HighlightEntitiesJob
+                    {
+                        EntityToHighlight = workingState.lastRaycastEntity,
+                        CommandBuffer = m_OnUpdateMemory.CommandBuffer,
+                        EdgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup
+                    }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
+
+                    m_OnUpdateMemory.CurrentInputDeps =
+                        JobHandle.CombineDependencies(highlight, m_OnUpdateMemory.CurrentInputDeps);
+
+                    // Optional backwards-compat pass (left commented for performance).
+                    /*
+                    JobHandle backwardsCompat = new BackwardsCompatibilityZoningInfo
+                    {
+                        CurveLookup = m_TypeHandle.__Game_Net_Curve_RW_ComponentLookup,
+                        ZoningInfoLookup = m_TypeHandle.__Game_Zoning_Info_RW_ComponentLookup,
+                        CommandBuffer = m_OnUpdateMemory.CommandBuffer,
+                        SubBlockBufferLookup = m_TypeHandle.__Game_SubBlock_RW_BufferLookup,
+                        BackwardsCompatibilityEntity = workingState.lastRaycastEntity,
+                        BlockLookup = m_TypeHandle.__Game_Block_RW_ComponentLookup
+                    }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
+
+                    m_OnUpdateMemory.CurrentInputDeps =
+                        JobHandle.CombineDependencies(backwardsCompat, m_OnUpdateMemory.CurrentInputDeps);
+                    */
+                }
+            }
+            else
+            {
+                // Nothing under cursor: clear highlight.
+                workingState.lastRaycastEntity = Entity.Null;
+
+                if (previousEntity != Entity.Null)
+                {
+                    JobHandle unhighlight = new UnHighlightEntitiesJob
+                    {
+                        CommandBuffer = m_OnUpdateMemory.CommandBuffer,
+                        EntityToUnhighlight = previousEntity,
+                        EdgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup
+                    }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
+
+                    m_OnUpdateMemory.CurrentInputDeps =
+                        JobHandle.CombineDependencies(unhighlight, m_OnUpdateMemory.CurrentInputDeps);
+                }
+            }
+
+            return m_OnUpdateMemory.CurrentInputDeps;
+        }
+
+        // --- Component lookups --------------------------------------------------------------
+
         private struct TypeHandle
         {
+            [ReadOnly]
             public ComponentLookup<Curve> __Game_Net_Curve_RW_ComponentLookup;
             public ComponentLookup<ZoningInfo> __Game_Zoning_Info_RW_ComponentLookup;
             public BufferLookup<SubBlock> __Game_SubBlock_RW_BufferLookup;
@@ -379,10 +548,10 @@ namespace ZoningToolkit
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void __AssignHandles(ref SystemState state)
             {
-                __Game_Net_Curve_RW_ComponentLookup = state.GetComponentLookup<Curve>(isReadOnly: false);
+                __Game_Net_Curve_RW_ComponentLookup = state.GetComponentLookup<Curve>(isReadOnly: true);
                 __Game_Zoning_Info_RW_ComponentLookup = state.GetComponentLookup<ZoningInfo>(isReadOnly: false);
                 __Game_SubBlock_RW_BufferLookup = state.GetBufferLookup<SubBlock>(isReadOnly: false);
-                __Game_Block_RW_ComponentLookup = state.GetComponentLookup<Block>(isReadOnly: false);
+                __Game_Block_RW_ComponentLookup = state.GetComponentLookup<Block>(isReadOnly: true);
                 __Game_Edge_RW_ComponentLookup = state.GetComponentLookup<Edge>(isReadOnly: false);
             }
 
@@ -394,6 +563,109 @@ namespace ZoningToolkit
                 __Game_SubBlock_RW_BufferLookup.Update(ref state);
                 __Game_Block_RW_ComponentLookup.Update(ref state);
                 __Game_Edge_RW_ComponentLookup.Update(ref state);
+            }
+        }
+    }
+
+    // --- Simple state machine for click / drag behaviour -------------------------------------
+
+    internal delegate JobHandle StateCallback(
+        ZoningToolkitModToolSystemState previousState,
+        ZoningToolkitModToolSystemState nextState);
+
+    internal enum ZoningToolkitModToolSystemState
+    {
+        Default,
+        Selecting,
+        Selected
+    }
+
+    internal sealed class ZoningToolkitModToolSystemStateMachine
+    {
+        private ZoningToolkitModToolSystemState m_CurrentState;
+        private readonly Dictionary<(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next), StateCallback> m_Transitions;
+
+        internal ZoningToolkitModToolSystemStateMachine(
+            Dictionary<(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next), StateCallback> transitions)
+        {
+            m_CurrentState = ZoningToolkitModToolSystemState.Default;
+            m_Transitions = transitions;
+        }
+
+        internal ApplyMode Transition(IProxyAction applyAction)
+        {
+            ZoningToolkitModToolSystemState previousState = m_CurrentState;
+
+            switch (m_CurrentState)
+            {
+                case ZoningToolkitModToolSystemState.Default:
+                    if (applyAction.WasPressedThisFrame() && applyAction.WasReleasedThisFrame())
+                    {
+                        // Single quick click = apply to single segment.
+                        m_CurrentState = ZoningToolkitModToolSystemState.Selected;
+                        TryRunCallback(previousState, m_CurrentState);
+                        return ApplyMode.Apply;
+                    }
+                    else if (applyAction.WasPressedThisFrame() && !applyAction.WasReleasedThisFrame())
+                    {
+                        // Press start (drag select).
+                        m_CurrentState = ZoningToolkitModToolSystemState.Selecting;
+                        TryRunCallback(previousState, m_CurrentState);
+                        return ApplyMode.None;
+                    }
+                    else if (applyAction.IsPressed())
+                    {
+                        // Holding mouse while dragging.
+                        m_CurrentState = ZoningToolkitModToolSystemState.Selecting;
+                        TryRunCallback(previousState, m_CurrentState);
+                        return ApplyMode.None;
+                    }
+                    else if (applyAction.WasReleasedThisFrame())
+                    {
+                        // Mouse released -> apply.
+                        m_CurrentState = ZoningToolkitModToolSystemState.Selected;
+                        TryRunCallback(previousState, m_CurrentState);
+                        return ApplyMode.Apply;
+                    }
+                    break;
+
+                case ZoningToolkitModToolSystemState.Selecting:
+                    if (applyAction.IsPressed())
+                    {
+                        // Continue drag select.
+                        m_CurrentState = ZoningToolkitModToolSystemState.Selecting;
+                        TryRunCallback(previousState, m_CurrentState);
+                        return ApplyMode.None;
+                    }
+                    else if (!applyAction.IsPressed() && applyAction.WasReleasedThisFrame())
+                    {
+                        // Drag finished; selection is done, but zoning will be applied by Selected state.
+                        m_CurrentState = ZoningToolkitModToolSystemState.Selected;
+                        TryRunCallback(previousState, m_CurrentState);
+                        return ApplyMode.None;
+                    }
+                    break;
+
+                case ZoningToolkitModToolSystemState.Selected:
+                    // After applying, go back to idle.
+                    m_CurrentState = ZoningToolkitModToolSystemState.Default;
+                    TryRunCallback(previousState, m_CurrentState);
+                    return ApplyMode.Apply;
+            }
+
+            return ApplyMode.None;
+        }
+
+        internal void Reset()
+        {
+            m_CurrentState = ZoningToolkitModToolSystemState.Default;
+        }
+
+        private void TryRunCallback(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        {
+            if (m_Transitions.TryGetValue((previous, next), out StateCallback callback))
+            {
+                callback(previous, next);
             }
         }
     }

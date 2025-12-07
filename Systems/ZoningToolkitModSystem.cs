@@ -121,7 +121,7 @@ namespace ZoningToolkit.Systems
             JobHandle deps = Dependency;
 
             // Collect curves that were deleted this frame
-            var collectDeletedJob = new CollectDeletedCurves
+            JobHandle collectDeletedJob = new CollectDeletedCurves
             {
                 ownerTypeHandle = ownerTypeHandle,
                 deletedTypeHandle = m_DeletedTypeHandle,

@@ -30,7 +30,6 @@ namespace ZoningToolkit
         // Single shared logger for the whole mod (CO-style name)
         public static readonly ILog s_Log = LogManager.GetLogger(ModId);
 
-        // Static ctor to configure logger based on build
         static Mod()
         {
 #if DEBUG
@@ -48,7 +47,6 @@ namespace ZoningToolkit
 
         public void OnLoad(UpdateSystem updateSystem)
         {
-            // Once-only log banner
             if (!s_BannerLogged)
             {
                 s_BannerLogged = true;
@@ -62,22 +60,15 @@ namespace ZoningToolkit
             GameManager? gm = GameManager.instance;
             LocalizationManager? lm = gm?.localizationManager;
 
-            // Add English locale source
             lm?.AddSource("en-US", new LocaleEN(setting));
 
-            // Load saved settings, then show Options UI (simple style like your other mods)
             // FileLocation path is "ModsSettings/ZoneTools/ZoneTools"
             AssetDatabase.global.LoadSettings("ZoneTools", setting, new Setting(this));
             setting.RegisterInOptionsUI();
 
             // ----- System registration -----
-            // Tool: used for existing-road zoning updates / UI-driven tool on/off state.
             updateSystem.UpdateAt<ZoningToolkitModToolSystem>(SystemUpdatePhase.ToolUpdate);
-
-            // Core zoning logic: applies zoning behaviour to blocks.
             updateSystem.UpdateAt<ZoningToolkitModSystem>(SystemUpdatePhase.Modification4B);
-
-            // UI bridge: C# <-> Cohtml/React UI.
             updateSystem.UpdateAt<ZoningToolkitModUISystem>(SystemUpdatePhase.UIUpdate);
         }
 
@@ -90,8 +81,6 @@ namespace ZoningToolkit
                 Settings.UnregisterInOptionsUI();
                 Settings = null;
             }
-
-            // Do NOT remove locales here; the game manages the localization manager lifecycle.
         }
     }
 }
