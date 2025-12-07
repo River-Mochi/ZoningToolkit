@@ -1,3 +1,5 @@
+/** vanilla-bindings.ts */
+
 import { getModule } from "cs2/modding";
 import { ButtonProps, TooltipProps } from "cs2/ui";
 import { FC, ReactNode } from "react";

@@ -1,4 +1,6 @@
-﻿import engine, { EventHandle } from "cohtml/cohtml";
+﻿// state.tsx
+
+import engine, { EventHandle } from "cohtml/cohtml";
 import React from "react";
 import { create } from "zustand";
 

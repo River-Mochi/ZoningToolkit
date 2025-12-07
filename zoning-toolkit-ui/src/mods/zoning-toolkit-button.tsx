@@ -1,4 +1,6 @@
-﻿import { Button } from "cs2/ui";
+﻿// zoning-toolkit-ui/src/mods/zoning-toolkit-button.tsx
+
+import { Button } from "cs2/ui";
 import React, { CSSProperties } from 'react';
 
 import menuIcon from "../../assets/icons/menu_icon.svg";

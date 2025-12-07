@@ -1,6 +1,7 @@
+// zoning-toolkit-ui/mod.json
 {
-  "id": "ZoningToolkit",
-  "author": "Zeeshan Abid",
-  "version": "1.0.0",
+  "id": "ZoneTools",
+  "author": "River-Mochi",
+  "version": "1.0.1",
   "dependencies": []
 }

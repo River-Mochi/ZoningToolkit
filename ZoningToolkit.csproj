@@ -4,26 +4,28 @@
 		<OutputType>Library</OutputType>
 		<Configurations>Debug;Release</Configurations>
 
-		<!-- Paradox Mods publish config (keep if you use it) -->
+		<!-- Paradox Mods publish config -->
 		<PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
 
-		<!-- Versioning -->
-		<Version>1.0.0</Version>
+		<!-- Versioning: single source of truth -->
+		<Version>1.0.1</Version>
+		<AssemblyVersion>$(Version).0</AssemblyVersion>
 		<FileVersion>$(Version).0</FileVersion>
-		<AssemblyVersion>1.0.0.0</AssemblyVersion>
 
-		<!-- Assembly/product metadata (rename later when we switch to ZoneControl) -->
-		<Company>$(Authors)</Company>
-		<AssemblyTitle>ZoningToolkit</AssemblyTitle>
-		<AssemblyName>ZoningToolkit</AssemblyName>
-		<Product>ZoningToolkit</Product>
-		<Title>ZoningToolkit</Title>
+		<!-- Assembly/product metadata -->
+		<AssemblyTitle>ZoneTools</AssemblyTitle>
+		<AssemblyName>ZoneTools</AssemblyName>
+		<Product>ZoneTools</Product>
+		<Title>ZoneTools</Title>
 
-		<!-- Keep warnings strict (remove if too noisy) -->
-		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+		<Nullable>enable</Nullable>
 
 		<!-- Only set this if you *must* override the Managed path -->
 		<CustomManagedPath></CustomManagedPath>
+
+		<!-- NPM runner + UI build strictness -->
+		<!-- On Windows, `npm` is fine (resolves npm.cmd). Change to npm.cmd if you prefer. -->
+		<NpmCmd>npm</NpmCmd>
 	</PropertyGroup>
 
 	<!-- Release has short informational version -->
@@ -102,17 +104,28 @@
 		</Reference>
 	</ItemGroup>
 
-	<!-- Build your Cohtml/React UI bundle (only if the UI project exists) -->
-	<Target Name="BuildUI" AfterTargets="AfterBuild" Condition="Exists('$(ProjectDir)zoning-toolkit-ui\package.json')">
-		<Exec Command="npm run build" WorkingDirectory="$(ProjectDir)zoning-toolkit-ui" />
+	<!-- Run npm ci AFTER C# build, only when needed:
+       - first time (node_modules missing), OR
+       - package-lock.json changed since last run (tracked by .stamp) -->
+	<Target Name="NpmInstallIfNeeded" AfterTargets="Build" Condition="Exists('$(ProjectDir)zoning-toolkit-ui\package.json')" Inputs="$(ProjectDir)zoning-toolkit-ui\package-lock.json" Outputs="$(ProjectDir)zoning-toolkit-ui\node_modules\.stamp">
+		<Message Text="ZT UI: npm ci (first-time or lockfile changed)..." Importance="high" />
+		<Exec Command="$(NpmCmd) ci" WorkingDirectory="$(ProjectDir)zoning-toolkit-ui" IgnoreExitCode="true">
+			<Output TaskParameter="ExitCode" PropertyName="NpmCiExit" />
+		</Exec>
+		<!-- Soft-fail (warn instead of error) -->
+		<Warning Condition="'$(NpmCiExit)' != '0'" Text="ZT UI: 'npm ci' failed (exit $(NpmCiExit)). Continuing C# build." />
+		<!-- On success, write/update the stamp -->
+		<WriteLinesToFile Condition="'$(NpmCiExit)' == '0'" File="$(ProjectDir)zoning-toolkit-ui\node_modules\.stamp" Lines="ok" Overwrite="true" />
 	</Target>
 
-	<!-- Copy the UI bundle into the deploy directory (only if UI output exists) -->
-	<Target Name="CopyUIFiles" AfterTargets="DeployWIP" Condition="Exists('bin\UI')">
-		<ItemGroup>
-			<UIFiles Include="bin\UI\**\*.*" />
-		</ItemGroup>
-		<Copy SourceFiles="@(UIFiles)" DestinationFiles="@(UIFiles->'$(DeployDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
+	<!-- Always run the UI bundle AFTER C# build; ensure it runs *after* NpmInstallIfNeeded -->
+	<Target Name="BuildUI" AfterTargets="Build" DependsOnTargets="NpmInstallIfNeeded" Condition="Exists('$(ProjectDir)zoning-toolkit-ui\package.json')">
+		<Message Text="ZT UI: npm run build ($(Configuration))..." Importance="high" />
+		<Exec Command="$(NpmCmd) run build" WorkingDirectory="$(ProjectDir)zoning-toolkit-ui" IgnoreExitCode="true">
+			<Output TaskParameter="ExitCode" PropertyName="NpmBuildExit" />
+		</Exec>
+		<!-- Soft-fail (warn instead of error) -->
+		<Warning Condition="'$(NpmBuildExit)' != '0'" Text="ZT UI: 'npm run build' failed (exit $(NpmBuildExit)). Continuing C# build." />
 	</Target>
 
 	<!-- Optional: prints the active TargetFramework during build; remove anytime -->

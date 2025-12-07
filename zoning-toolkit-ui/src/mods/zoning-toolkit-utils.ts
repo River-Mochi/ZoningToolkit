@@ -1,3 +1,5 @@
+/** zoning-toolkit-ui/src/mods/zoning-toolkit-utils.ts  */
+
 import modeIconDefault from "../../assets/icons/mode_icon_default.svg";
 import modeIconNone from "../../assets/icons/mode_icon_none.svg";
 import modeIconLeft from "../../assets/icons/mode_icon_left.svg";

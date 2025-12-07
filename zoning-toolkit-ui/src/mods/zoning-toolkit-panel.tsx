@@ -1,4 +1,6 @@
-﻿import React, { CSSProperties } from 'react';
+﻿// zoning-toolkit-ui/src/mods/zoning-toolkit-panel.tsx
+
+import React, { CSSProperties } from 'react';
 import Draggable from 'react-draggable';
 import { Panel, PanelSection, PanelSectionRow } from 'cs2/ui';
 

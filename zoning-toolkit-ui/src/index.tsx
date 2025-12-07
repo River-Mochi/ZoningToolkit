@@ -1,3 +1,5 @@
+// zoning-toolkit-ui/src/index.tsx
+
 import { ModRegistrar } from "cs2/modding";
 import { ZoningToolkitPanel } from "mods/zoning-toolkit-panel";
 import { ZoningToolkitMenuButton } from "./mods/zoning-toolkit-button";
