@@ -1,4 +1,5 @@
 // Systems/ZoningToolkitModSystem.cs
+// Core zoning application system (new + updated blocks).
 
 namespace ZoningToolkit.Systems
 {

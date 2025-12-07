@@ -1,5 +1,5 @@
 // Systems/ZoningToolkitModToolSystem.cs
-// Interactive zoning update tool: hover, click, drag-select existing roads and apply ZoneTools zoning modes.
+// Update tool (replace icon): hover, click, drag-select existing roads and apply ZoneTools zoning modes.
 
 namespace ZoningToolkit.Systems
 {

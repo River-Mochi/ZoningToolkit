@@ -1,24 +1,29 @@
 // Mod.cs
-// Entry point for ZoneTools (ZT) – logging, settings, localization, system registration.
-
+// Entry point for Zone Tools – logging, settings, localization, systems, and Shift+G hotkey.
 namespace ZoningToolkit
 {
-    using System.Reflection;            // AssemblyVersion
-    using Colossal.IO.AssetDatabase;    // AssetDatabase.global
-    using Colossal.Localization;        // LocalizationManager
-    using Colossal.Logging;             // ILog
-    using Game;                         // UpdateSystem
-    using Game.Common;                  // SystemUpdatePhase
-    using Game.Modding;                 // IMod
-    using Game.SceneFlow;               // GameManager
-    using ZoningToolkit.Systems;        // ECS systems
+    using System.Reflection;
+    using Colossal.IO.AssetDatabase;
+    using Colossal.Localization;
+    using Colossal.Logging;
+    using Game;
+    using Game.Common;
+    using Game.Input;
+    using Game.Modding;
+    using Game.SceneFlow;
+    using Unity.Entities;
+    using UnityEngine.InputSystem;
+    using ZoningToolkit.Systems;
 
     public sealed class Mod : IMod
     {
         // Metadata
-        public const string ModName = "ZoneTools";
-        public const string ModId = "ZoneTools";
-        public const string ModTag = "[ZT]";
+        public const string ModName = "Zone Tools";
+        public const string ModId   = "ZoneTools";   // matches mod.json id and assembly name
+        public const string ModTag  = "[ZT]";
+
+        // Keybinding action name (used by Setting + Keybindings UI)
+        public const string kToggleUpdateToolBindingName = "ToggleUpdateTool";
 
         // Version from assembly (3-part)
         public static readonly string ModVersion =
@@ -27,8 +32,18 @@ namespace ZoningToolkit
         // Once-only banner
         private static bool s_BannerLogged;
 
-        // Single shared logger for the whole mod (CO-style name)
+        // Shared logger
         public static readonly ILog s_Log = LogManager.GetLogger(ModId);
+
+        // Active settings
+        public static Setting? Settings
+        {
+            get;
+            private set;
+        }
+
+        // ProxyAction for Shift+G
+        private static ProxyAction? s_ToggleUpdateToolAction;
 
         static Mod()
         {
@@ -39,47 +54,115 @@ namespace ZoningToolkit
 #endif
         }
 
-        // Active settings (Options UI)
-        public static Setting? Settings
-        {
-            get; private set;
-        }
-
         public void OnLoad(UpdateSystem updateSystem)
         {
+            // Once-only banner
             if (!s_BannerLogged)
             {
                 s_BannerLogged = true;
                 s_Log.Info($"{ModName} {ModTag} v{ModVersion} OnLoad");
             }
 
-            // ----- Settings + localization -----
+            // ----- Settings + localization ------------------------------------
+
             var setting = new Setting(this);
             Settings = setting;
 
-            GameManager? gm = GameManager.instance;
-            LocalizationManager? lm = gm?.localizationManager;
+            GameManager? gameManager = GameManager.instance;
+            LocalizationManager? localizationManager = gameManager?.localizationManager;
 
-            lm?.AddSource("en-US", new LocaleEN(setting));
+            // Add English locale
+            localizationManager?.AddSource("en-US", new LocaleEN(setting));
 
-            // FileLocation path is "ModsSettings/ZoneTools/ZoneTools"
-            AssetDatabase.global.LoadSettings("ZoneTools", setting, new Setting(this));
+            // Load saved settings, then register Options UI.
+            // FileLocation attribute handles the ModsSettings/ZoneTools/ZoneTools path.
+            AssetDatabase.global.LoadSettings(ModId, setting, new Setting(this));
             setting.RegisterInOptionsUI();
 
-            // ----- System registration -----
+            // Register key bindings so they show in the Keybindings tab.
+            setting.RegisterKeyBindings();
+
+            // Get our Shift+G action and hook a handler.
+            s_ToggleUpdateToolAction = setting.GetAction(kToggleUpdateToolBindingName);
+            if (s_ToggleUpdateToolAction != null)
+            {
+                s_ToggleUpdateToolAction.shouldBeEnabled = true;
+                s_ToggleUpdateToolAction.onInteraction += OnToggleUpdateToolInteraction;
+            }
+
+            if (gameManager != null &&
+                gameManager.modManager.TryGetExecutableAsset(this, out var asset))
+            {
+                s_Log.Info($"{ModTag} Asset path: {asset.path}");
+            }
+
+            // ----- ECS systems -------------------------------------------------
+
+            // Tool: existing-road zoning editor.
             updateSystem.UpdateAt<ZoningToolkitModToolSystem>(SystemUpdatePhase.ToolUpdate);
+
+            // Core zoning application system (new + updated blocks).
             updateSystem.UpdateAt<ZoningToolkitModSystem>(SystemUpdatePhase.Modification4B);
+
+            // UI bridge: C# <-> Cohtml/React panel + button.
             updateSystem.UpdateAt<ZoningToolkitModUISystem>(SystemUpdatePhase.UIUpdate);
+
+            s_Log.Info($"{ModTag} Systems registered.");
         }
 
         public void OnDispose()
         {
             s_Log.Info(nameof(OnDispose));
 
+            // Keep OnDispose minimal – just remove Options UI.
             if (Settings != null)
             {
                 Settings.UnregisterInOptionsUI();
                 Settings = null;
+            }
+
+            // We intentionally do NOT explicitly tear down keybindings or locales;
+            // CS2 cleans these up when unloading the mod.
+        }
+
+        private static void OnToggleUpdateToolInteraction(ProxyAction action, InputActionPhase phase)
+        {
+            if (phase != InputActionPhase.Performed)
+            {
+                return;
+            }
+
+            try
+            {
+                World world = World.DefaultGameObjectInjectionWorld;
+                if (world == null || !world.IsCreated)
+                {
+                    return;
+                }
+
+                ZoningToolkitModToolSystem? toolSystem =
+                    world.GetExistingSystemManaged<ZoningToolkitModToolSystem>();
+
+                if (toolSystem == null)
+                {
+                    return;
+                }
+
+                bool enable = !toolSystem.toolEnabled;
+                s_Log.Info($"{ModTag} Hotkey toggle update tool -> {enable}");
+
+                if (enable)
+                {
+                    toolSystem.EnableTool();
+                }
+                else
+                {
+                    toolSystem.DisableTool();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                s_Log.Error($"{ModTag} ToggleUpdateTool exception: {ex}");
             }
         }
     }

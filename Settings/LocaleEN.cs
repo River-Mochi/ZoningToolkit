@@ -1,19 +1,18 @@
-// Settings/LocaleEN.cs
-// en-US localization for ZoneTools Options UI (About tab).
-
-using System.Collections.Generic;
-using Colossal; // IDictionarySource, IDictionaryEntryError
-using Game.Settings;
-
 namespace ZoningToolkit
 {
+    // Settings/LocaleEN.cs
+    // English localization for Zone Tools Options UI and keybinding labels.
+
+    using System.Collections.Generic;
+    using Colossal;
+
     public sealed class LocaleEN : IDictionarySource
     {
-        private readonly Setting _setting;
+        private readonly Setting m_Setting;
 
         public LocaleEN(Setting setting)
         {
-            _setting = setting;
+            m_Setting = setting;
         }
 
         public IEnumerable<KeyValuePair<string, string>> ReadEntries(
@@ -22,29 +21,32 @@ namespace ZoningToolkit
         {
             var d = new Dictionary<string, string>
             {
-                // Options title – like BuildingFixer: "ModName [Tag]"
-                { _setting.GetSettingsLocaleID(), Mod.ModName + " " + Mod.ModTag },
+                // Options title (single source of truth from Mod.cs)
+                { m_Setting.GetSettingsLocaleID(), Mod.ModName + " " + Mod.ModTag },
 
                 // Tabs
-                { _setting.GetOptionTabLocaleID(Setting.kAboutTab), "About" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kAboutTab), "About" },
 
                 // Groups
-                { _setting.GetOptionGroupLocaleID(Setting.kAboutInfoGroup), "Info" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),    "About"        },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup), "Key bindings" },
 
-                // About: ModName
-                { _setting.GetOptionLabelLocaleID(nameof(Setting.ModName)), "Mod name" },
-                { _setting.GetOptionDescLocaleID(nameof(Setting.ModName)),  "Display name of this mod." },
+                // About fields
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "Mod name" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModName)),     "Display name of this mod." },
 
-                // About: ModVersion
-                { _setting.GetOptionLabelLocaleID(nameof(Setting.ModVersion)), "Version" },
-                { _setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Current ZoneTools version." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModVersion)), "Version" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Current Zone Tools version." },
 
-                // About: Description
-                { _setting.GetOptionLabelLocaleID(nameof(Setting.Description)), "Description" },
+                // Keybinding option (Options → Mods)
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ToggleUpdateToolBinding)), "Toggle panel" },
                 {
-                    _setting.GetOptionDescLocaleID(nameof(Setting.Description)),
-                    "ZoneTools lets you enable or disable zoning on each side of roads (left, right, both, or none)."
-                }
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ToggleUpdateToolBinding)),
+                    "Keyboard shortcut to show or hide the Zone Tools panel (same as clicking the top-left menu icon)."
+                },
+
+                // Keybinding name (Options → Keybindings)
+                { m_Setting.GetBindingKeyLocaleID(Mod.kToggleUpdateToolBindingName), "Zone Tools – Toggle panel" },
             };
 
             return d;
@@ -52,7 +54,7 @@ namespace ZoningToolkit
 
         public void Unload()
         {
-            // Nothing to clean up; game manages localization sources.
+            // Nothing to clean up; CS2 manages locale life cycle.
         }
     }
 }

@@ -1,7 +1,8 @@
-// Systems/ZoningToolkitModUISystem.cs
-
 namespace ZoningToolkit.Systems
 {
+    // Systems/ZoningToolkitModUISystem.cs
+    // Bridge between Zone Tools C# systems and the React/Cohtml UI (panel state + bindings).
+
     using System;
     using Colossal.UI.Binding;
     using Game;
@@ -81,6 +82,15 @@ namespace ZoningToolkit.Systems
             }));
         }
 
+        /// <summary>
+        /// Called by the Shift+G keybind to toggle panel visibility
+        /// (same as clicking the GameTopLeft menu button).
+        /// </summary>
+        internal void TogglePanelFromHotkey()
+        {
+            m_UIState.visible = !m_UIState.visible;
+        }
+
         private void ToggleTool(bool enable)
         {
             if (enable)
@@ -95,7 +105,6 @@ namespace ZoningToolkit.Systems
 
         private void OnToolChanged(ToolBaseSystem tool)
         {
-            // Only show UI when the active tool is a net tool with a zoning-capable road prefab
             if (tool is NetToolSystem netTool &&
                 netTool.GetPrefab() is RoadPrefab roadPrefab &&
                 roadPrefab.m_ZoneBlock != null)
