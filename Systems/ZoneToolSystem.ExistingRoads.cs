@@ -233,7 +233,7 @@ namespace ZoningToolkit.Systems
         private ZoningToolkitModToolSystemStateMachine m_StateMachine = null!;
         private TypeHandle m_TypeHandle;
         private OnUpdateMemory m_OnUpdateMemory;
-        private ZoningToolkitModUISystem m_UISystem = null!;
+        private ZoneToolBridgeUI m_UISystem = null!;
 
         internal bool toolEnabled
         {
@@ -260,7 +260,7 @@ namespace ZoningToolkit.Systems
             m_ToolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
             m_NetToolSystem = World.GetOrCreateSystemManaged<NetToolSystem>();
             m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
-            m_UISystem = World.GetOrCreateSystemManaged<ZoningToolkitModUISystem>();
+            m_UISystem = World.GetOrCreateSystemManaged<ZoneToolBridgeUI>();
 
             toolEnabled = false;
 

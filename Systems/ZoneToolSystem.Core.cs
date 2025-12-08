@@ -16,7 +16,7 @@ namespace ZoningToolkit.Systems
     using ZoningToolkit.Components;
     using ZoningToolkit.Utils;
 
-    public partial class ZoningToolkitModSystem : GameSystemBase
+    public partial class ZoneToolSystemCore : GameSystemBase
     {
         private EntityQuery m_NewBlocksQuery;
         private EntityQuery m_UpdateBlocksQuery;
@@ -43,7 +43,7 @@ namespace ZoningToolkit.Systems
 
         protected override void OnCreate()
         {
-            Mod.s_Log.Info("Creating ZoningToolkitModSystem");
+            Mod.s_Log.Info("Creating ZoneToolSystemCore");
 
             base.OnCreate();
 

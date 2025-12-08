@@ -1,5 +1,5 @@
 // Systems/ZoneToolSystem.Keybind.cs
-// Shift+Z (rebindable) → toggle Zone Tools panel visibility (same as GameTopLeft icon).
+// Handles the Zone Tools keybinding (Shift+Z by default) via CO's InputManager.
 
 namespace ZoningToolkit.Systems
 {
@@ -7,41 +7,36 @@ namespace ZoningToolkit.Systems
     using Game.Input;
     using Unity.Entities;
 
-    internal sealed partial class ZoneToolKeybindSystem : GameSystemBase
+    /// <summary>
+    /// Runs in ToolUpdate and listens to the CO ProxyAction registered in Setting.RegisterKeyBindings().
+    /// When the action is pressed, it toggles the Zone Tools UI panel (same as clicking the GameTopLeft button).
+    /// </summary>
+    public sealed partial class ZoneToolSystemKeybind : GameSystemBase
     {
-        private ZoningToolkitModUISystem m_UISystem = null!;
-        private ProxyAction? m_Toggle;
+        private ZoneToolBridgeUI m_UISystem = null!;
 
         protected override void OnCreate()
         {
             base.OnCreate();
 
-            // Grab the UI system that owns TogglePanelFromHotkey()
-            m_UISystem = World.GetOrCreateSystemManaged<ZoningToolkitModUISystem>();
-
-            // Initial reference to our ProxyAction (defined via Setting + Mod.kTogglePanelActionName)
-            m_Toggle = Mod.TogglePanelAction;
+            // UI bridge system that owns TogglePanelFromHotkey().
+            m_UISystem = World.GetOrCreateSystemManaged<ZoneToolBridgeUI>();
         }
 
         protected override void OnUpdate()
         {
-            // In case keybindings were reloaded, refresh a null reference.
-            m_Toggle ??= Mod.TogglePanelAction;
-
-            ProxyAction? toggle = m_Toggle;
-            if (toggle == null)
+            // Use the CO ProxyAction that was registered from Setting.RegisterKeyBindings().
+            ProxyAction? togglePanelAction = Mod.TogglePanelAction;
+            if (togglePanelAction == null)
             {
                 return;
             }
 
-            // This is the ONLY thing we do every frame: check for “edge” press.
-            if (!toggle.WasPressedThisFrame())
+            // Rebindable via Options UI. Default is Shift+Z.
+            if (togglePanelAction.WasPressedThisFrame())
             {
-                return;
+                m_UISystem.TogglePanelFromHotkey();
             }
-
-            // Behaves exactly like clicking the GameTopLeft Zone Tools button.
-            m_UISystem.TogglePanelFromHotkey();
         }
     }
 }

@@ -13,7 +13,7 @@ namespace ZoningToolkit.Utils
     public static class EntityUtils
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void listEntityComponents(this ZoningToolkitModSystem system, Entity entity)
+        public static void listEntityComponents(this ZoneToolSystemCore system, Entity entity)
         {
             var types = system.EntityManager.GetComponentTypes(entity);
             foreach (var type in types)
@@ -33,7 +33,7 @@ namespace ZoningToolkit.Utils
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void listEntityComponentsInQuery(this ZoningToolkitModSystem system, EntityQuery entityQuery)
+        public static void listEntityComponentsInQuery(this ZoneToolSystemCore system, EntityQuery entityQuery)
         {
             NativeArray<Entity> entities = entityQuery.ToEntityArray(Allocator.Temp);
 

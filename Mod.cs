@@ -40,7 +40,7 @@ namespace ZoningToolkit
             get; private set;
         }
 
-        // The ProxyAction for Shift+Z (rebindable). Used by ZoneToolKeybindSystem.
+        // The ProxyAction for Shift+Z (rebindable). Used by ZoneToolSystemKeybind.
         public static ProxyAction? TogglePanelAction
         {
             get; private set;
@@ -104,13 +104,13 @@ namespace ZoningToolkit
             updateSystem.UpdateAt<ZoningToolkitModToolSystem>(SystemUpdatePhase.ToolUpdate);
 
             // Core zoning logic that applies the selected zoning mode to blocks.
-            updateSystem.UpdateAt<ZoningToolkitModSystem>(SystemUpdatePhase.Modification4B);
+            updateSystem.UpdateAt<ZoneToolSystemCore>(SystemUpdatePhase.Modification4B);
 
             // Cohtml UI bridge (C# <-> React panel).
-            updateSystem.UpdateAt<ZoningToolkitModUISystem>(SystemUpdatePhase.UIUpdate);
+            updateSystem.UpdateAt<ZoneToolBridgeUI>(SystemUpdatePhase.UIUpdate);
 
             // Hotkey system – listens to Shift+Z and toggles the panel.
-            updateSystem.UpdateAt<ZoneToolKeybindSystem>(SystemUpdatePhase.ToolUpdate);
+            updateSystem.UpdateAt<ZoneToolSystemKeybind>(SystemUpdatePhase.ToolUpdate);
         }
 
         public void OnDispose()

@@ -21,11 +21,11 @@ namespace ZoningToolkit.Systems
         public bool toolEnabled;
     }
 
-    internal sealed partial class ZoningToolkitModUISystem : UISystemBase
+    internal sealed partial class ZoneToolBridgeUI : UISystemBase
     {
         private const string kGroup = "zoning_adjuster_ui_namespace";
 
-        private ZoningToolkitModSystem m_ZoningSystem = null!;
+        private ZoneToolSystemCore m_ZoningSystem = null!;
         private ToolSystem m_ToolSystem = null!;
         private ZoningToolkitModToolSystem m_Tool = null!;
         private PhotoModeRenderSystem m_PhotoMode = null!;
@@ -40,7 +40,7 @@ namespace ZoningToolkit.Systems
         {
             base.OnCreate();
 
-            m_ZoningSystem = World.GetOrCreateSystemManaged<ZoningToolkitModSystem>();
+            m_ZoningSystem = World.GetOrCreateSystemManaged<ZoneToolSystemCore>();
             m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
             m_PhotoMode = World.GetOrCreateSystemManaged<PhotoModeRenderSystem>();
             m_Tool = World.GetOrCreateSystemManaged<ZoningToolkitModToolSystem>();
