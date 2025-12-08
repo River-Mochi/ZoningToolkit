@@ -97,3 +97,6 @@ dotnet_naming_rule.const_fields_k_prefix.severity = suggestion
 dotnet_naming_rule.private_internal_const_fields_k_prefix.symbols = private_internal_const_fields
 dotnet_naming_rule.private_internal_const_fields_k_prefix.style = k_prefix_pascal
 dotnet_naming_rule.private_internal_const_fields_k_prefix.severity = suggestion
+
+# IDE0031: Use null propagation
+dotnet_diagnostic.IDE0031.severity = suggestion

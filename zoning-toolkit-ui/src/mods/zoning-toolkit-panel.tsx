@@ -1,4 +1,5 @@
 ﻿// zoning-toolkit-ui/src/mods/zoning-toolkit-panel.tsx
+// Zone Tools main in-game panel (mode buttons + update tool toggle).
 
 import React, { CSSProperties } from 'react';
 import Draggable from 'react-draggable';
@@ -54,7 +55,7 @@ export class ZoningToolkitPanelInternal extends React.Component {
             <Draggable bounds="parent" grid={[10, 10]}>
                 <Panel
                     className={panelStyles.panel}
-                    header="Zoning Toolkit"
+                    header="Zone Tools"
                     style={panelStyle}
                 >
                     <PanelSection>
@@ -82,7 +83,7 @@ export class ZoningToolkitPanelInternal extends React.Component {
                                     focusKey={VanillaBindings.common.focus.disabled}
                                     selected={isToolEnabled}
                                     src={updateToolIcon}
-                                    tooltip="Toggle zoning update tool (for existing roads). Note that roads with zoned buildings will skip rezoning (for safety)."
+                                    tooltip="Toggle zoning update tool (for existing roads). Roads with zoned buildings will skip rezoning (for safety)."
                                     onSelect={() => this.handleZoneToolSelect(!isToolEnabled)}
                                 />
                             )}

@@ -1,11 +1,10 @@
-// Systems/ZoningToolkitModToolSystem.cs
-// Update tool (replace icon): hover, click, drag-select existing roads and apply ZoneTools zoning modes.
+// Systems/ZoneToolSystem.ExistingRoads.cs
+// Update tool Existing Roads: hover, drag-select existing roads, and apply Zone Tools modes.
 
 namespace ZoningToolkit.Systems
 {
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
-    using Game;
     using Game.Areas;
     using Game.Common;
     using Game.Input;
@@ -16,7 +15,6 @@ namespace ZoningToolkit.Systems
     using Unity.Collections;
     using Unity.Entities;
     using Unity.Jobs;
-    using UnityEngine;
     using ZoningToolkit.Components;
     using ZoningToolkit.Utils;
 
@@ -68,6 +66,7 @@ namespace ZoningToolkit.Systems
 
     /// <summary>
     /// Job: for older saves that don't have ZoningInfo, infer zoning from existing blocks.
+    /// (Currently unused, but kept for compatibility if needed later.)
     /// </summary>
     public struct BackwardsCompatibilityZoningInfo : IJob
     {
@@ -80,7 +79,6 @@ namespace ZoningToolkit.Systems
 
         public void Execute()
         {
-            // Already has ZoningInfo -> nothing to do.
             if (ZoningInfoLookup.HasComponent(BackwardsCompatibilityEntity))
             {
                 return;
@@ -106,7 +104,6 @@ namespace ZoningToolkit.Systems
 
                     if (dot > 0f)
                     {
-                        // Left side.
                         if (block.m_Size.y > 0)
                         {
                             leftBlock = true;
@@ -114,7 +111,6 @@ namespace ZoningToolkit.Systems
                     }
                     else
                     {
-                        // Right side.
                         if (block.m_Size.y > 0)
                         {
                             rightBlock = true;
@@ -168,8 +164,15 @@ namespace ZoningToolkit.Systems
             {
                 if (CurveLookup.HasComponent(entity))
                 {
-                    // Apply zoning info to the road entity.
-                    CommandBuffer.AddComponent(entity, NewZoningInfo);
+                    // Apply zoning info to the road entity (set if present, add if missing).
+                    if (ZoningInfoLookup.HasComponent(entity))
+                    {
+                        CommandBuffer.SetComponent(entity, NewZoningInfo);
+                    }
+                    else
+                    {
+                        CommandBuffer.AddComponent(entity, NewZoningInfo);
+                    }
 
                     // Mark all sub-blocks as needing re-zoning.
                     if (SubBlockBufferLookup.HasBuffer(entity))
@@ -201,7 +204,7 @@ namespace ZoningToolkit.Systems
     }
 
     /// <summary>
-    /// Main ZoneTools "update existing roads" tool.
+    /// Main Zone Tools "update existing roads" tool.
     /// </summary>
     internal sealed partial class ZoningToolkitModToolSystem : ToolBaseSystem
     {
@@ -230,14 +233,16 @@ namespace ZoningToolkit.Systems
         private ZoningToolkitModToolSystemStateMachine m_StateMachine = null!;
         private TypeHandle m_TypeHandle;
         private OnUpdateMemory m_OnUpdateMemory;
+        private ZoningToolkitModUISystem m_UISystem = null!;
 
         internal bool toolEnabled
         {
             get; private set;
         }
+
         internal WorkingState workingState;
 
-        public override string toolID => "ZoneTools Zoning Tool";
+        public override string toolID => "Zone Tools Zoning Tool";
 
         protected override void OnCreateForCompiler()
         {
@@ -252,10 +257,10 @@ namespace ZoningToolkit.Systems
 
             Enabled = false;
 
-            // CO-style system lookups
             m_ToolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
             m_NetToolSystem = World.GetOrCreateSystemManaged<NetToolSystem>();
-            m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>(); // base field from ToolBaseSystem
+            m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
+            m_UISystem = World.GetOrCreateSystemManaged<ZoningToolkitModUISystem>();
 
             toolEnabled = false;
 
@@ -263,7 +268,7 @@ namespace ZoningToolkit.Systems
             workingState.lastRaycastEntities = default;
             workingState.zoningMode = ZoningMode.Default;
 
-            // Simple click / drag state machine using IProxyAction (see Mod_Key_Binding wiki).
+            // Simple click / drag state machine using the vanilla Apply action (LMB by default).
             m_StateMachine = new ZoningToolkitModToolSystemStateMachine(
                 new Dictionary<(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next), StateCallback>
                 {
@@ -290,6 +295,7 @@ namespace ZoningToolkit.Systems
             {
                 tools.Remove(this);
             }
+
             tools.Add(this);
 
             Mod.s_Log.Info($"Done creating {toolID}.");
@@ -302,9 +308,15 @@ namespace ZoningToolkit.Systems
 
             toolEnabled = true;
 
+            // Enable Apply (LMB) and Secondary Apply (RMB) actions
+            applyAction.shouldBeEnabled = true;
+            secondaryApplyAction.shouldBeEnabled = true;
+
             m_OnUpdateMemory = default;
             workingState.lastRaycastEntity = Entity.Null;
             workingState.lastRaycastEntities = new NativeHashSet<Entity>(32, Allocator.Persistent);
+            workingState.zoningMode = m_UISystem.CurrentZoningMode;
+
             m_StateMachine.Reset();
         }
 
@@ -315,12 +327,14 @@ namespace ZoningToolkit.Systems
 
             toolEnabled = false;
 
+            applyAction.shouldBeEnabled = false;
+            secondaryApplyAction.shouldBeEnabled = false;
+
             if (workingState.lastRaycastEntities.IsCreated)
             {
                 workingState.lastRaycastEntities.Dispose();
             }
 
-            // Make sure any outstanding jobs are completed.
             m_OnUpdateMemory.CurrentInputDeps.Complete();
         }
 
@@ -355,7 +369,13 @@ namespace ZoningToolkit.Systems
                 CommandBuffer = m_ToolOutputBarrier.CreateCommandBuffer()
             };
 
-            // Drive the state machine using the built-in apply action (IProxyAction).
+            // RMB / Secondary Apply: cycle zoning mode
+            if (secondaryApplyAction.WasPressedThisFrame())
+            {
+                CycleZoningMode();
+            }
+
+            // LMB / Apply: drive the click/drag state machine
             applyMode = m_StateMachine.Transition(applyAction);
 
             m_ToolOutputBarrier.AddJobHandleForProducer(m_OnUpdateMemory.CurrentInputDeps);
@@ -397,6 +417,21 @@ namespace ZoningToolkit.Systems
             }
         }
 
+        private void CycleZoningMode()
+        {
+            ZoningMode current = m_UISystem.CurrentZoningMode;
+            ZoningMode next = current switch
+            {
+                ZoningMode.Default => ZoningMode.Left,
+                ZoningMode.Left => ZoningMode.Right,
+                ZoningMode.Right => ZoningMode.None,
+                ZoningMode.None => ZoningMode.Default,
+                _ => ZoningMode.Default
+            };
+
+            m_UISystem.SetZoningModeFromTool(next);
+        }
+
         // --- State-machine callbacks --------------------------------------------------------
 
         private JobHandle StopDragSelect(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
@@ -415,7 +450,8 @@ namespace ZoningToolkit.Systems
                 }
             }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
 
-            m_OnUpdateMemory.CurrentInputDeps = JobHandle.CombineDependencies(m_OnUpdateMemory.CurrentInputDeps, job);
+            m_OnUpdateMemory.CurrentInputDeps =
+                JobHandle.CombineDependencies(m_OnUpdateMemory.CurrentInputDeps, job);
             return m_OnUpdateMemory.CurrentInputDeps;
         }
 
@@ -494,22 +530,6 @@ namespace ZoningToolkit.Systems
 
                     m_OnUpdateMemory.CurrentInputDeps =
                         JobHandle.CombineDependencies(highlight, m_OnUpdateMemory.CurrentInputDeps);
-
-                    // Optional backwards-compat pass (left commented for performance).
-                    /*
-                    JobHandle backwardsCompat = new BackwardsCompatibilityZoningInfo
-                    {
-                        CurveLookup = m_TypeHandle.__Game_Net_Curve_RW_ComponentLookup,
-                        ZoningInfoLookup = m_TypeHandle.__Game_Zoning_Info_RW_ComponentLookup,
-                        CommandBuffer = m_OnUpdateMemory.CommandBuffer,
-                        SubBlockBufferLookup = m_TypeHandle.__Game_SubBlock_RW_BufferLookup,
-                        BackwardsCompatibilityEntity = workingState.lastRaycastEntity,
-                        BlockLookup = m_TypeHandle.__Game_Block_RW_ComponentLookup
-                    }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
-
-                    m_OnUpdateMemory.CurrentInputDeps =
-                        JobHandle.CombineDependencies(backwardsCompat, m_OnUpdateMemory.CurrentInputDeps);
-                    */
                 }
             }
             else
@@ -601,7 +621,7 @@ namespace ZoningToolkit.Systems
                 case ZoningToolkitModToolSystemState.Default:
                     if (applyAction.WasPressedThisFrame() && applyAction.WasReleasedThisFrame())
                     {
-                        // Single quick click = apply to single segment.
+                        // Single quick click.
                         m_CurrentState = ZoningToolkitModToolSystemState.Selected;
                         TryRunCallback(previousState, m_CurrentState);
                         return ApplyMode.Apply;
@@ -627,6 +647,7 @@ namespace ZoningToolkit.Systems
                         TryRunCallback(previousState, m_CurrentState);
                         return ApplyMode.Apply;
                     }
+
                     break;
 
                 case ZoningToolkitModToolSystemState.Selecting:
@@ -644,6 +665,7 @@ namespace ZoningToolkit.Systems
                         TryRunCallback(previousState, m_CurrentState);
                         return ApplyMode.None;
                     }
+
                     break;
 
                 case ZoningToolkitModToolSystemState.Selected:

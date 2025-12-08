@@ -1,4 +1,4 @@
-// Systems/ZoningToolkitModSystem.cs
+// Systems/ZoneToolSystem.Core.cs
 // Core zoning application system (new + updated blocks).
 
 namespace ZoningToolkit.Systems
@@ -116,8 +116,10 @@ namespace ZoningToolkit.Systems
 
             EntityCommandBuffer ecb = m_ModificationBarrier4B.CreateCommandBuffer();
 
-            var deletedByStart = new NativeParallelHashMap<float2, Entity>(32, Allocator.TempJob);
-            var deletedByEnd = new NativeParallelHashMap<float2, Entity>(32, Allocator.TempJob);
+            NativeParallelHashMap<float2, Entity> deletedByStart =
+                new NativeParallelHashMap<float2, Entity>(32, Allocator.TempJob);
+            NativeParallelHashMap<float2, Entity> deletedByEnd =
+                new NativeParallelHashMap<float2, Entity>(32, Allocator.TempJob);
 
             JobHandle deps = Dependency;
 
@@ -137,7 +139,7 @@ namespace ZoningToolkit.Systems
             // Newly created blocks
             if (!m_NewBlocksQuery.IsEmptyIgnoreFilter)
             {
-                var job = new UpdateZoneData
+                JobHandle job = new UpdateZoneData
                 {
                     zoningMode = zoningMode,
                     entityTypeHandle = m_EntityTypeHandle,
@@ -160,7 +162,7 @@ namespace ZoningToolkit.Systems
             // Existing blocks flagged for zoning update
             if (!m_UpdateBlocksQuery.IsEmptyIgnoreFilter)
             {
-                var job = new UpdateZoningInfoJob
+                JobHandle job = new UpdateZoningInfoJob
                 {
                     zoningMode = zoningMode,
                     entityTypeHandle = m_EntityTypeHandle,
@@ -178,7 +180,7 @@ namespace ZoningToolkit.Systems
                 deps = JobHandle.CombineDependencies(deps, job);
             }
 
-            var disposeJob = new DisposeHashMaps
+            JobHandle disposeJob = new DisposeHashMaps
             {
                 toDispose1 = deletedByStart,
                 toDispose2 = deletedByEnd
@@ -218,36 +220,44 @@ namespace ZoningToolkit.Systems
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                var blocks = chunk.GetNativeArray(ref blockComponentTypeHandle);
-                var entities = chunk.GetNativeArray(entityTypeHandle);
-                var cellBufs = chunk.GetBufferAccessor(ref bufferTypeHandle);
-                var validAreas = chunk.GetNativeArray(ref validAreaComponentTypeHandle);
+                NativeArray<Block> blocks = chunk.GetNativeArray(ref blockComponentTypeHandle);
+                NativeArray<Entity> entities = chunk.GetNativeArray(entityTypeHandle);
+                BufferAccessor<Cell> cellBufs = chunk.GetBufferAccessor(ref bufferTypeHandle);
+                NativeArray<ValidArea> validAreas = chunk.GetNativeArray(ref validAreaComponentTypeHandle);
 
                 for (int i = 0; i < entities.Length; i++)
                 {
-                    var entity = entities[i];
+                    Entity entity = entities[i];
 
                     if (!ownerComponentLookup.HasComponent(entity))
+                    {
                         continue;
+                    }
 
-                    var owner = ownerComponentLookup[entity];
+                    Owner owner = ownerComponentLookup[entity];
 
                     if (!zoningInfoComponentLookup.HasComponent(owner.m_Owner))
+                    {
                         continue;
+                    }
 
                     if (!zoningInfoUpdateComponentLookup.HasComponent(entity))
+                    {
                         continue;
+                    }
 
                     if (!curveComponentLookup.HasComponent(owner.m_Owner))
+                    {
                         continue;
+                    }
 
-                    var curve = curveComponentLookup[owner.m_Owner];
-                    var block = blocks[i];
-                    var cells = cellBufs[i];
-                    var validArea = validAreas[i];
+                    Curve curve = curveComponentLookup[owner.m_Owner];
+                    Block block = blocks[i];
+                    DynamicBuffer<Cell> cells = cellBufs[i];
+                    ValidArea validArea = validAreas[i];
 
-                    var dot = BlockUtils.blockCurveDotProduct(block, curve);
-                    var zi = zoningInfoComponentLookup[owner.m_Owner];
+                    float dot = BlockUtils.blockCurveDotProduct(block, curve);
+                    ZoningInfo zi = zoningInfoComponentLookup[owner.m_Owner];
 
                     if (!BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea))
                     {
@@ -278,29 +288,35 @@ namespace ZoningToolkit.Systems
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                var blocks = chunk.GetNativeArray(ref blockComponentTypeHandle);
-                var entities = chunk.GetNativeArray(entityTypeHandle);
-                var cellBufs = chunk.GetBufferAccessor(ref bufferTypeHandle);
-                var validAreas = chunk.GetNativeArray(ref validAreaComponentTypeHandle);
+                NativeArray<Block> blocks = chunk.GetNativeArray(ref blockComponentTypeHandle);
+                NativeArray<Entity> entities = chunk.GetNativeArray(entityTypeHandle);
+                BufferAccessor<Cell> cellBufs = chunk.GetBufferAccessor(ref bufferTypeHandle);
+                NativeArray<ValidArea> validAreas = chunk.GetNativeArray(ref validAreaComponentTypeHandle);
 
                 if (chunk.Has(ref deletedTypeHandle))
+                {
                     return;
+                }
 
                 for (int i = 0; i < blocks.Length; i++)
                 {
-                    var entity = entities[i];
+                    Entity entity = entities[i];
 
                     if (!ownerComponentLookup.HasComponent(entity))
+                    {
                         continue;
+                    }
 
-                    var owner = ownerComponentLookup[entity];
+                    Owner owner = ownerComponentLookup[entity];
 
                     if (!curveComponentLookup.HasComponent(owner.m_Owner))
+                    {
                         continue;
+                    }
 
-                    var curve = curveComponentLookup[owner.m_Owner];
+                    Curve curve = curveComponentLookup[owner.m_Owner];
 
-                    var zi = new ZoningInfo { zoningMode = zoningMode };
+                    ZoningInfo zi = new ZoningInfo { zoningMode = zoningMode };
 
                     if (!appliedLookup.HasComponent(owner.m_Owner))
                     {
@@ -315,8 +331,8 @@ namespace ZoningToolkit.Systems
                     }
                     else
                     {
-                        if (entitiesByStartPoint.TryGetValue(curve.m_Bezier.a.xz, out var s) &
-                            entitiesByEndPoint.TryGetValue(curve.m_Bezier.d.xz, out var e))
+                        if (entitiesByStartPoint.TryGetValue(curve.m_Bezier.a.xz, out Entity s) &
+                            entitiesByEndPoint.TryGetValue(curve.m_Bezier.d.xz, out Entity e))
                         {
                             if (s == e && zoningInfoComponentLookup.HasComponent(s))
                             {
@@ -324,33 +340,41 @@ namespace ZoningToolkit.Systems
                             }
                             else if (curveComponentLookup.HasComponent(s) && curveComponentLookup.HasComponent(e))
                             {
-                                var sZI = zoningInfoComponentLookup.HasComponent(s) ? zoningInfoComponentLookup[s] : default;
-                                var eZI = zoningInfoComponentLookup.HasComponent(e) ? zoningInfoComponentLookup[e] : default;
+                                ZoningInfo sZI = zoningInfoComponentLookup.HasComponent(s)
+                                    ? zoningInfoComponentLookup[s]
+                                    : default;
+                                ZoningInfo eZI = zoningInfoComponentLookup.HasComponent(e)
+                                    ? zoningInfoComponentLookup[e]
+                                    : default;
                                 zi = sZI.Equals(eZI) ? sZI : new ZoningInfo { zoningMode = ZoningMode.Default };
                             }
                         }
-                        else if (entitiesByEndPoint.TryGetValue(curve.m_Bezier.d.xz, out var eOnly) &&
+                        else if (entitiesByEndPoint.TryGetValue(curve.m_Bezier.d.xz, out Entity eOnly) &&
                                  zoningInfoComponentLookup.HasComponent(eOnly))
                         {
                             zi = zoningInfoComponentLookup[eOnly];
                         }
-                        else if (entitiesByStartPoint.TryGetValue(curve.m_Bezier.a.xz, out var sOnly) &&
+                        else if (entitiesByStartPoint.TryGetValue(curve.m_Bezier.a.xz, out Entity sOnly) &&
                                  zoningInfoComponentLookup.HasComponent(sOnly))
                         {
                             zi = zoningInfoComponentLookup[sOnly];
                         }
 
                         if (zoningInfoComponentLookup.HasComponent(owner.m_Owner))
+                        {
                             zi = zoningInfoComponentLookup[owner.m_Owner];
+                        }
                     }
 
-                    var block = blocks[i];
-                    var cells = cellBufs[i];
-                    var validArea = validAreas[i];
+                    Block block = blocks[i];
+                    DynamicBuffer<Cell> cells = cellBufs[i];
+                    ValidArea validArea = validAreas[i];
 
-                    var dot = BlockUtils.blockCurveDotProduct(block, curve);
+                    float dot = BlockUtils.blockCurveDotProduct(block, curve);
                     if (BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea))
+                    {
                         continue;
+                    }
 
                     BlockUtils.editBlockSizes(dot, zi, validArea, block, entity, entityCommandBuffer);
                     entityCommandBuffer.AddComponent(owner.m_Owner, zi);
@@ -369,10 +393,12 @@ namespace ZoningToolkit.Systems
 
             public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
             {
-                var owners = chunk.GetNativeArray(ref ownerTypeHandle);
+                NativeArray<Owner> owners = chunk.GetNativeArray(ref ownerTypeHandle);
 
                 if (!chunk.Has(ref deletedTypeHandle))
+                {
                     return;
+                }
 
                 for (int i = 0; i < owners.Length; i++)
                 {

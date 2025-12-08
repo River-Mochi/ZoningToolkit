@@ -1,8 +1,8 @@
+// Settings/LocaleEN.cs
+// English localization for Zone Tools Options UI and keybinding labels.
+
 namespace ZoningToolkit
 {
-    // Settings/LocaleEN.cs
-    // English localization for Zone Tools Options UI and keybinding labels.
-
     using System.Collections.Generic;
     using Colossal;
 
@@ -39,14 +39,14 @@ namespace ZoningToolkit
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Current Zone Tools version." },
 
                 // Keybinding option (Options → Mods)
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ToggleUpdateToolBinding)), "Toggle panel" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "Toggle panel" },
                 {
-                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ToggleUpdateToolBinding)),
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.TogglePanelBinding)),
                     "Keyboard shortcut to show or hide the Zone Tools panel (same as clicking the top-left menu icon)."
                 },
 
                 // Keybinding name (Options → Keybindings)
-                { m_Setting.GetBindingKeyLocaleID(Mod.kToggleUpdateToolBindingName), "Zone Tools – Toggle panel" },
+                { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Toggle panel" },
             };
 
             return d;

@@ -1,4 +1,4 @@
-# CS2: Zoning Toolkit
+# CS2: Zone Tools
 
 Mod for Cities Skylines 2 that provides control of the zoning along a city's roads. Zoning can be enabled on both sides of roads, on any one side, or no sides at all.
 This enables finer control of where buildings will spawn, as well as placing roads close together without overlapping/conflicting zones.

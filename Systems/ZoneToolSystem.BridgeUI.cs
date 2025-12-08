@@ -1,8 +1,8 @@
+// Systems/ZoneToolSystem.BridgeUI.cs
+// Bridges Zone Tools ECS state with the in-game UI (panel, menu button, and tool enable/disable).
+
 namespace ZoningToolkit.Systems
 {
-    // Systems/ZoningToolkitModUISystem.cs
-    // Bridge between Zone Tools C# systems and the React/Cohtml UI (panel state + bindings).
-
     using System;
     using Colossal.UI.Binding;
     using Game;
@@ -59,36 +59,45 @@ namespace ZoningToolkit.Systems
             m_ToolSystem.EventToolChanged =
                 (Action<ToolBaseSystem>)Delegate.Combine(m_ToolSystem.EventToolChanged, new Action<ToolBaseSystem>(OnToolChanged));
 
-            // UI -> JS update bindings
+            // C# -> UI bindings
             AddUpdateBinding(new GetterValueBinding<string>(kGroup, "zoning_mode", () => m_UIState.zoningMode.ToString()));
             AddUpdateBinding(new GetterValueBinding<bool>(kGroup, "tool_enabled", () => m_UIState.toolEnabled));
             AddUpdateBinding(new GetterValueBinding<bool>(kGroup, "visible", () => m_UIState.visible));
             AddUpdateBinding(new GetterValueBinding<bool>(kGroup, "photomode", () => m_PhotoMode.Enabled));
 
-            // JS -> C# triggers
+            // UI -> C# bindings
             AddBinding(new TriggerBinding<string>(kGroup, "zoning_mode_update", zoningModeString =>
             {
                 if (Enum.TryParse<ZoningMode>(zoningModeString, out ZoningMode mode))
                 {
-                    Mod.s_Log.Info($"ZoneTools UI: zoning mode updated to {mode}");
+                    Mod.s_Log.Info($"Zone Tools UI: zoning mode updated to {mode}");
                     m_UIState.zoningMode = mode;
                 }
             }));
 
             AddBinding(new TriggerBinding<bool>(kGroup, "tool_enabled", enabled =>
             {
-                Mod.s_Log.Info($"ZoneTools UI: tool_enabled set to {enabled}");
+                Mod.s_Log.Info($"Zone Tools UI: tool_enabled set to {enabled}");
                 ToggleTool(enabled);
             }));
         }
 
-        /// <summary>
-        /// Called by the Shift+G keybind to toggle panel visibility
-        /// (same as clicking the GameTopLeft menu button).
-        /// </summary>
+        // Called from Mod.cs when Shift+Z is pressed.
+        // This should ONLY toggle the panel, not the tool.
         internal void TogglePanelFromHotkey()
         {
             m_UIState.visible = !m_UIState.visible;
+        }
+
+        // Used by the zoning tool to read / change the active mode.
+        internal ZoningMode CurrentZoningMode => m_UIState.zoningMode;
+
+        internal void SetZoningModeFromTool(ZoningMode mode)
+        {
+            if (m_UIState.zoningMode != mode)
+            {
+                m_UIState.zoningMode = mode;
+            }
         }
 
         private void ToggleTool(bool enable)
@@ -105,6 +114,7 @@ namespace ZoningToolkit.Systems
 
         private void OnToolChanged(ToolBaseSystem tool)
         {
+            // Only show UI when the active tool is a net tool with a zoning-capable road prefab
             if (tool is NetToolSystem netTool &&
                 netTool.GetPrefab() is RoadPrefab roadPrefab &&
                 roadPrefab.m_ZoneBlock != null)
@@ -133,7 +143,7 @@ namespace ZoningToolkit.Systems
         {
             base.OnUpdate();
 
-            // Apply pending show/hide state
+            // Apply pending show/hide state driven by tool / prefab changes
             if (m_ActivateUI)
             {
                 m_ActivateUI = false;
@@ -158,7 +168,7 @@ namespace ZoningToolkit.Systems
                 }
             }
 
-            // Sync UI state -> systems
+            // Sync UI -> tool/system
             if (m_UIState.zoningMode != m_Tool.workingState.zoningMode)
             {
                 ZoningToolkitModToolSystem.WorkingState ws = m_Tool.workingState;
@@ -171,7 +181,7 @@ namespace ZoningToolkit.Systems
                 m_ZoningSystem.zoningMode = m_UIState.zoningMode;
             }
 
-            // Sync systems -> UI (tool enabled flag)
+            // Sync tool -> UI (tool enabled flag)
             if (m_UIState.toolEnabled != m_Tool.toolEnabled)
             {
                 m_UIState.toolEnabled = m_Tool.toolEnabled;

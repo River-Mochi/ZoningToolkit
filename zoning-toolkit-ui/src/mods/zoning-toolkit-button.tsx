@@ -1,4 +1,5 @@
 ﻿// zoning-toolkit-ui/src/mods/zoning-toolkit-button.tsx
+// Zone Tools menu button in GameTopLeft – toggles the Zone Tools UI panel.
 
 import { Button } from "cs2/ui";
 import React, { CSSProperties } from 'react';
@@ -12,13 +13,12 @@ const { DescriptionTooltip } = VanillaBindings.components;
 
 class ZoningToolkitMenuButtonInternal extends React.Component {
 	handleMenuButtonClick = () => {
-		console.log("ZoningToolkit: Clicked toolkit menu button");
+		console.log("ZoneTools: Clicked toolkit menu button");
 		useModUIStore.getState().updateUiVisible(!useModUIStore.getState().uiVisible)
 	}
 
 	render() {
 		const photomodeActive = useModUIStore.getState().photomodeActive
-
 		const buttonStyle: CSSProperties = {
 			// Menu button should be hidden in photo mode
 			display: photomodeActive ? "none" : undefined,
@@ -26,9 +26,9 @@ class ZoningToolkitMenuButtonInternal extends React.Component {
 
 		return (
 			<DescriptionTooltip
-				description="Control/modify zoning along roads. Allows zoning on both sides of roads, on any one side, or no sides at all."
+				description="Modify zoning along roads. Allows zoning on both sides of roads, or any one side, or no sides."
 				direction="right"
-				title="Zoning Toolkit"
+				title="Zone Tools"
 			>
 				<Button
 					style={buttonStyle}

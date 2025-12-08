@@ -1,5 +1,5 @@
 // Settings/Setting.cs
-// Options UI for ZoneTools – About info + keyboard shortcut for the update tool.
+// Options UI for Zone Tools – About info + keyboard shortcut for the Zone Tools panel.
 
 namespace ZoningToolkit
 {
@@ -12,6 +12,9 @@ namespace ZoningToolkit
     [SettingsUITabOrder(kAboutTab)]
     [SettingsUIGroupOrder(kAboutGroup, kBindingsGroup)]
     [SettingsUIShowGroupName(kAboutGroup)]
+
+    // Declare the keyboard action (CO InputManager action).
+    [SettingsUIKeyboardAction(Mod.kTogglePanelActionName, ActionType.Button, usages: new[] { "Game" })]
     public sealed class Setting : ModSetting
     {
         // Tabs
@@ -19,7 +22,7 @@ namespace ZoningToolkit
 
         // Groups
         public const string kAboutGroup = "About";
-        public const string kBindingsGroup = "Bindings";
+        public const string kBindingsGroup = "Key bindings";
 
         public Setting(IMod mod)
             : base(mod)
@@ -28,7 +31,7 @@ namespace ZoningToolkit
 
         public override void SetDefaults()
         {
-            // Nothing special to reset yet.
+            // No saved options yet.
         }
 
         // ----- ABOUT TAB ------------------------------------------------------
@@ -40,11 +43,13 @@ namespace ZoningToolkit
         public string ModVersion => Mod.ModVersion;
 
         // ----- KEYBINDINGS ----------------------------------------------------
-        // Rebindable shortcut that toggles the ZoneTools update tool (existing roads).
-        // Default: Shift+G
+        // Default: Shift+Z; user can rebind in Options → Mods and Keybindings.
 
         [SettingsUISection(kAboutTab, kBindingsGroup)]
-        [SettingsUIKeyboardBinding(BindingKeyboard.G, Mod.kToggleUpdateToolBindingName, shift: true)]
-        public ProxyBinding ToggleUpdateToolBinding { get; set; }
+        [SettingsUIKeyboardBinding(BindingKeyboard.Z, Mod.kTogglePanelActionName, shift: true)]
+        public ProxyBinding TogglePanelBinding
+        {
+            get; set;
+        }
     }
 }
