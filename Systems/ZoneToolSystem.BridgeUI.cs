@@ -82,11 +82,12 @@ namespace ZoningToolkit.Systems
             }));
         }
 
-        // Called from Mod.cs when Shift+Z is pressed.
-        // This should ONLY toggle the panel, not the tool.
+        // Called from Mod.cs / ZoneToolSystemKeybind when keybind fires.
+        // This should ONLY toggle the small panel, not the tool.
         internal void TogglePanelFromHotkey()
         {
             m_UIState.visible = !m_UIState.visible;
+            Mod.s_Log.Info($"[ZT] TogglePanelFromHotkey: m_UIState.visible = {m_UIState.visible}");
         }
 
         // Used by the zoning tool to read / change the active mode.
