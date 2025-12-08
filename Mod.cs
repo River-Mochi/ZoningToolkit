@@ -101,7 +101,7 @@ namespace ZoningToolkit
             // ----- ECS systems -----------------------------------------------
 
             // Tool for updating existing-road zoning (used by the "Update Tool" icon).
-            updateSystem.UpdateAt<ZoningToolkitModToolSystem>(SystemUpdatePhase.ToolUpdate);
+            updateSystem.UpdateAt<ZoneToolSystemExistingRoads>(SystemUpdatePhase.ToolUpdate);
 
             // Core zoning logic that applies the selected zoning mode to blocks.
             updateSystem.UpdateAt<ZoneToolSystemCore>(SystemUpdatePhase.Modification4B);

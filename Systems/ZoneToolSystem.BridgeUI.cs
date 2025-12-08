@@ -27,7 +27,7 @@ namespace ZoningToolkit.Systems
 
         private ZoneToolSystemCore m_ZoningSystem = null!;
         private ToolSystem m_ToolSystem = null!;
-        private ZoningToolkitModToolSystem m_Tool = null!;
+        private ZoneToolSystemExistingRoads m_Tool = null!;
         private PhotoModeRenderSystem m_PhotoMode = null!;
 
         private bool m_ActivateUI;
@@ -43,7 +43,7 @@ namespace ZoningToolkit.Systems
             m_ZoningSystem = World.GetOrCreateSystemManaged<ZoneToolSystemCore>();
             m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
             m_PhotoMode = World.GetOrCreateSystemManaged<PhotoModeRenderSystem>();
-            m_Tool = World.GetOrCreateSystemManaged<ZoningToolkitModToolSystem>();
+            m_Tool = World.GetOrCreateSystemManaged<ZoneToolSystemExistingRoads>();
 
             m_UIState = new UIState
             {
@@ -172,7 +172,7 @@ namespace ZoningToolkit.Systems
             // Sync UI -> tool/system
             if (m_UIState.zoningMode != m_Tool.workingState.zoningMode)
             {
-                ZoningToolkitModToolSystem.WorkingState ws = m_Tool.workingState;
+                ZoneToolSystemExistingRoads.WorkingState ws = m_Tool.workingState;
                 ws.zoningMode = m_UIState.zoningMode;
                 m_Tool.workingState = ws;
             }

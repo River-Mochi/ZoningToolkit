@@ -206,7 +206,7 @@ namespace ZoningToolkit.Systems
     /// <summary>
     /// Main Zone Tools "update existing roads" tool.
     /// </summary>
-    internal sealed partial class ZoningToolkitModToolSystem : ToolBaseSystem
+    internal sealed partial class ZoneToolSystemExistingRoads : ToolBaseSystem
     {
         /// <summary>
         /// Per-frame scratch data (jobs & ECB).
@@ -230,7 +230,7 @@ namespace ZoningToolkit.Systems
         private ToolOutputBarrier m_ToolOutputBarrier = null!;
         private NetToolSystem m_NetToolSystem = null!;
         private ToolBaseSystem? m_PreviousToolSystem;
-        private ZoningToolkitModToolSystemStateMachine m_StateMachine = null!;
+        private ZoneToolSystemExistingRoadsStateMachine m_StateMachine = null!;
         private TypeHandle m_TypeHandle;
         private OnUpdateMemory m_OnUpdateMemory;
         private ZoneToolBridgeUI m_UISystem = null!;
@@ -269,14 +269,14 @@ namespace ZoningToolkit.Systems
             workingState.zoningMode = ZoningMode.Default;
 
             // Simple click / drag state machine using the vanilla Apply action (LMB by default).
-            m_StateMachine = new ZoningToolkitModToolSystemStateMachine(
-                new Dictionary<(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next), StateCallback>
+            m_StateMachine = new ZoneToolSystemExistingRoadsStateMachine(
+                new Dictionary<(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next), StateCallback>
                 {
-                    { (ZoningToolkitModToolSystemState.Default,   ZoningToolkitModToolSystemState.Selected),  EntityHighlighted },
-                    { (ZoningToolkitModToolSystemState.Default,   ZoningToolkitModToolSystemState.Default),   HoverUpdate      },
-                    { (ZoningToolkitModToolSystemState.Default,   ZoningToolkitModToolSystemState.Selecting), StartDragSelect  },
-                    { (ZoningToolkitModToolSystemState.Selecting, ZoningToolkitModToolSystemState.Selecting), KeepDragSelect   },
-                    { (ZoningToolkitModToolSystemState.Selecting, ZoningToolkitModToolSystemState.Selected),  StopDragSelect   },
+                    { (ZoneToolSystemExistingRoadsState.Default,   ZoneToolSystemExistingRoadsState.Selected),  EntityHighlighted },
+                    { (ZoneToolSystemExistingRoadsState.Default,   ZoneToolSystemExistingRoadsState.Default),   HoverUpdate      },
+                    { (ZoneToolSystemExistingRoadsState.Default,   ZoneToolSystemExistingRoadsState.Selecting), StartDragSelect  },
+                    { (ZoneToolSystemExistingRoadsState.Selecting, ZoneToolSystemExistingRoadsState.Selecting), KeepDragSelect   },
+                    { (ZoneToolSystemExistingRoadsState.Selecting, ZoneToolSystemExistingRoadsState.Selected),  StopDragSelect   },
                 });
 
             // Ensure the tool is registered only once.
@@ -434,7 +434,7 @@ namespace ZoningToolkit.Systems
 
         // --- State-machine callbacks --------------------------------------------------------
 
-        private JobHandle StopDragSelect(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        private JobHandle StopDragSelect(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
         {
             JobHandle job = new UpdateZoningInfo
             {
@@ -455,25 +455,25 @@ namespace ZoningToolkit.Systems
             return m_OnUpdateMemory.CurrentInputDeps;
         }
 
-        private JobHandle HoverUpdate(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        private JobHandle HoverUpdate(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
         {
             EntityHighlighted(previous, next);
             return m_OnUpdateMemory.CurrentInputDeps;
         }
 
-        private JobHandle StartDragSelect(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        private JobHandle StartDragSelect(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
         {
             SelectEntity(previous, next);
             return m_OnUpdateMemory.CurrentInputDeps;
         }
 
-        private JobHandle KeepDragSelect(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        private JobHandle KeepDragSelect(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
         {
             SelectEntity(previous, next);
             return m_OnUpdateMemory.CurrentInputDeps;
         }
 
-        private JobHandle SelectEntity(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        private JobHandle SelectEntity(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
         {
             if (GetRaycastResult(out Entity entity, out RaycastHit _))
             {
@@ -496,7 +496,7 @@ namespace ZoningToolkit.Systems
             return m_OnUpdateMemory.CurrentInputDeps;
         }
 
-        private JobHandle EntityHighlighted(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        private JobHandle EntityHighlighted(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
         {
             Entity previousEntity = workingState.lastRaycastEntity;
 
@@ -590,87 +590,87 @@ namespace ZoningToolkit.Systems
     // --- Simple state machine for click / drag behaviour -------------------------------------
 
     internal delegate JobHandle StateCallback(
-        ZoningToolkitModToolSystemState previousState,
-        ZoningToolkitModToolSystemState nextState);
+        ZoneToolSystemExistingRoadsState previousState,
+        ZoneToolSystemExistingRoadsState nextState);
 
-    internal enum ZoningToolkitModToolSystemState
+    internal enum ZoneToolSystemExistingRoadsState
     {
         Default,
         Selecting,
         Selected
     }
 
-    internal sealed class ZoningToolkitModToolSystemStateMachine
+    internal sealed class ZoneToolSystemExistingRoadsStateMachine
     {
-        private ZoningToolkitModToolSystemState m_CurrentState;
-        private readonly Dictionary<(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next), StateCallback> m_Transitions;
+        private ZoneToolSystemExistingRoadsState m_CurrentState;
+        private readonly Dictionary<(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next), StateCallback> m_Transitions;
 
-        internal ZoningToolkitModToolSystemStateMachine(
-            Dictionary<(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next), StateCallback> transitions)
+        internal ZoneToolSystemExistingRoadsStateMachine(
+            Dictionary<(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next), StateCallback> transitions)
         {
-            m_CurrentState = ZoningToolkitModToolSystemState.Default;
+            m_CurrentState = ZoneToolSystemExistingRoadsState.Default;
             m_Transitions = transitions;
         }
 
         internal ApplyMode Transition(IProxyAction applyAction)
         {
-            ZoningToolkitModToolSystemState previousState = m_CurrentState;
+            ZoneToolSystemExistingRoadsState previousState = m_CurrentState;
 
             switch (m_CurrentState)
             {
-                case ZoningToolkitModToolSystemState.Default:
+                case ZoneToolSystemExistingRoadsState.Default:
                     if (applyAction.WasPressedThisFrame() && applyAction.WasReleasedThisFrame())
                     {
                         // Single quick click.
-                        m_CurrentState = ZoningToolkitModToolSystemState.Selected;
+                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selected;
                         TryRunCallback(previousState, m_CurrentState);
                         return ApplyMode.Apply;
                     }
                     else if (applyAction.WasPressedThisFrame() && !applyAction.WasReleasedThisFrame())
                     {
                         // Press start (drag select).
-                        m_CurrentState = ZoningToolkitModToolSystemState.Selecting;
+                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selecting;
                         TryRunCallback(previousState, m_CurrentState);
                         return ApplyMode.None;
                     }
                     else if (applyAction.IsPressed())
                     {
                         // Holding mouse while dragging.
-                        m_CurrentState = ZoningToolkitModToolSystemState.Selecting;
+                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selecting;
                         TryRunCallback(previousState, m_CurrentState);
                         return ApplyMode.None;
                     }
                     else if (applyAction.WasReleasedThisFrame())
                     {
                         // Mouse released -> apply.
-                        m_CurrentState = ZoningToolkitModToolSystemState.Selected;
+                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selected;
                         TryRunCallback(previousState, m_CurrentState);
                         return ApplyMode.Apply;
                     }
 
                     break;
 
-                case ZoningToolkitModToolSystemState.Selecting:
+                case ZoneToolSystemExistingRoadsState.Selecting:
                     if (applyAction.IsPressed())
                     {
                         // Continue drag select.
-                        m_CurrentState = ZoningToolkitModToolSystemState.Selecting;
+                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selecting;
                         TryRunCallback(previousState, m_CurrentState);
                         return ApplyMode.None;
                     }
                     else if (!applyAction.IsPressed() && applyAction.WasReleasedThisFrame())
                     {
                         // Drag finished; selection is done, but zoning will be applied by Selected state.
-                        m_CurrentState = ZoningToolkitModToolSystemState.Selected;
+                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selected;
                         TryRunCallback(previousState, m_CurrentState);
                         return ApplyMode.None;
                     }
 
                     break;
 
-                case ZoningToolkitModToolSystemState.Selected:
+                case ZoneToolSystemExistingRoadsState.Selected:
                     // After applying, go back to idle.
-                    m_CurrentState = ZoningToolkitModToolSystemState.Default;
+                    m_CurrentState = ZoneToolSystemExistingRoadsState.Default;
                     TryRunCallback(previousState, m_CurrentState);
                     return ApplyMode.Apply;
             }
@@ -680,10 +680,10 @@ namespace ZoningToolkit.Systems
 
         internal void Reset()
         {
-            m_CurrentState = ZoningToolkitModToolSystemState.Default;
+            m_CurrentState = ZoneToolSystemExistingRoadsState.Default;
         }
 
-        private void TryRunCallback(ZoningToolkitModToolSystemState previous, ZoningToolkitModToolSystemState next)
+        private void TryRunCallback(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
         {
             if (m_Transitions.TryGetValue((previous, next), out StateCallback callback))
             {
