@@ -1,53 +1,58 @@
 // eslint.config.mjs
-import js from "@eslint/js";
+// Flat config for Zone Tools UI (React + TypeScript, ESLint 9).
+
+import eslintJs from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-import pluginReact from "eslint-plugin-react";
-import { defineConfig } from "eslint/config";
+import reactPlugin from "eslint-plugin-react";
 
-export default defineConfig([
-    // 1) Global ignores
-    {
-        ignores: [
-            "build/**",
-            "dist/**",
-            "node_modules/**",
-        ],
-    },
+// Use typescript-eslint's flat-config helper to compose configs.
+export default tseslint.config(
+    // Base JS recommended rules
+    eslintJs.configs.recommended,
 
-    // 2) Base JS/TS files + browser globals
-    {
-        files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-        languageOptions: {
-            globals: {
-                ...globals.browser,
-            },
-        },
-    },
-
-    // 3) TypeScript recommended (already flat-config ready)
+    // Base TS rules (no type-checking, fine for this UI mod)
     ...tseslint.configs.recommended,
 
-    // 4) React plugin wired up in flat style
+    // Project-specific config: React + browser globals + custom rules
     {
+        files: ["**/*.{ts,tsx,js,jsx}"],
+        languageOptions: {
+            ecmaVersion: "latest",
+            sourceType: "module",
+            globals: {
+                ...globals.browser,
+                console: "readonly",
+            },
+        },
         plugins: {
-            react: pluginReact,
+            react: reactPlugin,
         },
         settings: {
             react: {
-                // Fixes: "React version not specified"
                 version: "detect",
             },
         },
         rules: {
-            // Base JS recommended rules
-            ...js.configs.recommended.rules,
+            // Turn off base rule and use TS version instead
+            "no-unused-vars": "off",
 
-            // React recommended rules, but only the rules object (no legacy `plugins` key)
-            ...pluginReact.configs.recommended.rules,
+            // Allow leading "_" for intentionally unused vars/args
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                {
+                    args: "all",
+                    argsIgnorePattern: "^_",
+                    varsIgnorePattern: "^_",
+                    caughtErrors: "all",
+                    caughtErrorsIgnorePattern: "^_",
+                    ignoreRestSiblings: true,
+                },
+            ],
 
-            // You’re on React 17+ with JSX transform; no need for React in scope
+            // React rules that don't make sense for CS2 UI
             "react/react-in-jsx-scope": "off",
+            "react/prop-types": "off",
         },
     },
-]);
+);
