@@ -14,17 +14,14 @@ export const ZoningToolkitMenuButton: React.FC = () => {
 
     const isToolEnabled = useModUIStore((state) => state.isToolEnabled);
     const updateIsToolEnabled = useModUIStore(
-        (state) => state.updateIsToolEnabled
+        (state) => state.updateIsToolEnabled,
     );
 
-    const tooltipLabel = translate(
-        "ZoneTools.ToolName",
-        "Zone Tools"
-    );
+    const tooltipLabel = translate("ZoneTools.ToolName", "Zone Tools");
 
     const handleClick = () => {
-        // Toggle tool enabled flag; C# side hears this via Cohtml binding.
-        updateIsToolEnabled(!isToolEnabled);
+        // Toggle the visibility of the panel.
+        useModUIStore.getState().updateUiVisible(!useModUIStore.getState().uiVisible);
     };
 
     return (
@@ -33,8 +30,6 @@ export const ZoningToolkitMenuButton: React.FC = () => {
             src={menuIcon}
             tooltipLabel={tooltipLabel}
             onClick={handleClick}
-            // If cs2/ui Button forwards className, this will pick up your .menuIcon;
-            // if not, it's harmless.
             className={styles.menuIcon}
         />
     );

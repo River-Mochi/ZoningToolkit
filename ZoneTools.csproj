@@ -24,7 +24,7 @@
 		<CustomManagedPath></CustomManagedPath>
 
 		<!-- NPM runner + UI build strictness -->
-		<!-- On Windows, `npm` is fine (resolves npm.cmd). Change to npm.cmd if you prefer. -->
+		<!-- On Windows, `npm` works (resolves npm.cmd). Change to npm.cmd if preferred. -->
 		<NpmCmd>npm</NpmCmd>
 	</PropertyGroup>
 
@@ -104,11 +104,15 @@
 		</Reference>
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="zoning-toolkit-ui\src\components\" />
+	</ItemGroup>
+
 	<!-- Run npm ci AFTER C# build, only when needed:
        - first time (node_modules missing), OR
        - package-lock.json changed since last run (tracked by .stamp) -->
 	<Target Name="NpmInstallIfNeeded" AfterTargets="Build" Condition="Exists('$(ProjectDir)zoning-toolkit-ui\package.json')" Inputs="$(ProjectDir)zoning-toolkit-ui\package-lock.json" Outputs="$(ProjectDir)zoning-toolkit-ui\node_modules\.stamp">
-		<Message Text="ZT UI: npm ci (first-time or lockfile changed)..." Importance="high" />
+		<Message Text="ZONE TOOLS UI: npm ci (first-time or lockfile changed)..." Importance="high" />
 		<Exec Command="$(NpmCmd) ci" WorkingDirectory="$(ProjectDir)zoning-toolkit-ui" IgnoreExitCode="true">
 			<Output TaskParameter="ExitCode" PropertyName="NpmCiExit" />
 		</Exec>
@@ -120,7 +124,7 @@
 
 	<!-- Always run the UI bundle AFTER C# build; ensure it runs *after* NpmInstallIfNeeded -->
 	<Target Name="BuildUI" AfterTargets="Build" DependsOnTargets="NpmInstallIfNeeded" Condition="Exists('$(ProjectDir)zoning-toolkit-ui\package.json')">
-		<Message Text="ZT UI: npm run build ($(Configuration))..." Importance="high" />
+		<Message Text="ZONE TOOLS UI: npm run build ($(Configuration))..." Importance="high" />
 		<Exec Command="$(NpmCmd) run build" WorkingDirectory="$(ProjectDir)zoning-toolkit-ui" IgnoreExitCode="true">
 			<Output TaskParameter="ExitCode" PropertyName="NpmBuildExit" />
 		</Exec>

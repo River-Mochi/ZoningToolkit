@@ -1,8 +1,8 @@
 ﻿// src/mods/zoning-toolkit-panel.tsx
-// Main Zone Tools panel: shows current mode and lets you switch modes.
+// Floating panel for Zone Tools (zoning mode picker + icons).
 
 import React from "react";
-import { withStore, ModUIState } from "./state";
+import { ModUIState, withStore } from "./state";
 import {
     ALL_ZONING_MODES,
     ZoningMode,
@@ -12,61 +12,104 @@ import {
 
 import styles from "./zoning-toolkit-panel.module.scss";
 
-const ZoningToolkitPanelInternal: React.FC<ModUIState> = (props: ModUIState) => {
-    const {
-        photomodeActive,
-        isToolEnabled,
-        zoningMode,
-        updateZoningMode,
-    } = props;
+type PanelProps = ModUIState;
 
-    // Hide panel when tool is off or photomode is active.
-    if (!isToolEnabled || photomodeActive) {
+const ZoningToolkitPanelInternal: React.FC<PanelProps> = (props) => {
+    const { uiVisible, photomodeActive, zoningMode, updateZoningMode } = props;
+
+    // Normalize C# sent string to our ZoningMode union.
+    const currentMode: ZoningMode = getModeFromString(zoningMode);
+
+    // Simple drag state (pixel-based)
+    const [position, setPosition] = React.useState<{ x: number; y: number }>({
+        x: 400,
+        y: 200,
+    });
+
+    const dragStartRef = React.useRef<{ offsetX: number; offsetY: number } | null>(
+        null
+    );
+
+    const handleMouseMove = (event: MouseEvent) => {
+        if (!dragStartRef.current) {
+            return;
+        }
+
+        const nextX = event.clientX - dragStartRef.current.offsetX;
+        const nextY = event.clientY - dragStartRef.current.offsetY;
+
+        setPosition({
+            x: Math.max(0, nextX),
+            y: Math.max(0, nextY),
+        });
+    };
+
+    const handleMouseUp = () => {
+        dragStartRef.current = null;
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    const handleMouseDown: React.MouseEventHandler<HTMLDivElement> = (event) => {
+        // Only left-button drag.
+        if (event.button !== 0) {
+            return;
+        }
+
+        const rect = event.currentTarget.getBoundingClientRect();
+        dragStartRef.current = {
+            offsetX: event.clientX - rect.left,
+            offsetY: event.clientY - rect.top,
+        };
+
+        window.addEventListener("mousemove", handleMouseMove);
+        window.addEventListener("mouseup", handleMouseUp);
+    };
+
+    // Hide panel if not visible or photomode is active
+    if (!uiVisible || photomodeActive) {
         return null;
     }
 
-    const activeMode: ZoningMode = getModeFromString(zoningMode);
-
     return (
-        <div className={styles.panel}>
-            <div className={styles.panelToolModeRow}>
-                {ALL_ZONING_MODES.map((mode) => {
-                    const isActive = mode === activeMode;
-                    const iconSrc = zoneModeIconMap[mode];
+        <div
+            className={styles.panel}
+            style={{
+                left: `${position.x}px`,
+                top: `${position.y}px`,
+            }}
+            onMouseDown={handleMouseDown}
+        >
+            {/* Zone Tools title; Vanilla handles font and color */}
+            <div className={styles.panelHeader}>Zone Tools</div>
 
-                    return (
-                        <button
-                            key={mode}
-                            type="button"
-                            style={{
-                                border: isActive ? "2px solid #fff" : "1px solid #666",
-                                marginRight: "8rem",
-                                padding: "4rem 8rem",
-                                background: isActive ? "#3059b5" : "#222",
-                                cursor: "pointer",
-                            }}
-                            onClick={() => updateZoningMode(mode)}
-                        >
-                            {iconSrc && (
+            <div className={styles.panelBody}>
+                <div className={styles.panelToolModeRow}>
+                    {ALL_ZONING_MODES.map((mode) => {
+                        const isActive = currentMode === mode;
+                        const buttonClass = `${styles.modeButton} ${isActive ? styles.modeButtonActive : ""
+                            }`.trim();
+
+                        return (
+                            <button
+                                key={mode}
+                                type="button"
+                                className={buttonClass}
+                                onClick={() => updateZoningMode(mode)}
+                                title={`Change to ${mode}`}
+                            >
                                 <img
-                                    src={iconSrc}
+                                    src={zoneModeIconMap[mode]}
                                     alt={mode}
-                                    style={{
-                                        width: "24rem",
-                                        height: "24rem",
-                                        marginRight: "4rem",
-                                        verticalAlign: "middle",
-                                    }}
+                                    className={styles.modeIcon}
                                 />
-                            )}
-                            <span>{mode}</span>
-                        </button>
-                    );
-                })}
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
         </div>
     );
 };
 
-// Export no-props component bound to the store.
 export const ZoningToolkitPanel = withStore(ZoningToolkitPanelInternal);

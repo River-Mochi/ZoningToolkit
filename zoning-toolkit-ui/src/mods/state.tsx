@@ -1,8 +1,8 @@
 ﻿// src/mods/state.tsx
 // Global UI state for Zone Tools (Zustand store + Cohtml event wiring + HOC).
 
-import engine, { EventHandle } from "cohtml/cohtml";
 import React from "react";
+import engine, { EventHandle } from "cohtml/cohtml";
 import { create } from "zustand";
 
 export interface ModUIState {
@@ -19,7 +19,7 @@ export interface ModUIState {
     updateUiVisible: (newValue: boolean) => void;
 }
 
-// Keep track of all Cohtml subscriptions so we can clean up.
+// Keep track of all Cohtml subscriptions so they can be cleaned up.
 const allSubscriptions = new Map<string, () => void>();
 
 // Central Zustand store used everywhere.
@@ -69,7 +69,7 @@ export const setupSubscriptions = () => {
             (zoningMode) => {
                 console.log(`zoning_mode update from C#: ${zoningMode}`);
                 useModUIStore.getState().updateZoningMode(zoningMode);
-            }
+            },
         );
         allSubscriptions.set(zoningModeEventKey, subscription);
     }
@@ -83,13 +83,12 @@ export const setupSubscriptions = () => {
             (toolEnabled) => {
                 console.log(`tool_enabled update from C#: ${toolEnabled}`);
                 useModUIStore.getState().updateIsToolEnabled(toolEnabled);
-            }
+            },
         );
         allSubscriptions.set(toolEnabledEventKey, subscription);
     }
 
-    // visible (bool) – currently unused by the React side, but wired for future use.
-    /*
+    // visible (bool) – drives panel show/hide (Shift+Z + tool logic).
     const visibleEventKey = "zoning_adjuster_ui_namespace.visible";
     if (!allSubscriptions.has(visibleEventKey)) {
         const subscription = updateEventFromCSharp<boolean>(
@@ -98,11 +97,10 @@ export const setupSubscriptions = () => {
             (visible) => {
                 console.log(`visible update from C#: ${visible}`);
                 useModUIStore.getState().updateUiVisible(visible);
-            }
+            },
         );
         allSubscriptions.set(visibleEventKey, subscription);
     }
-    */
 
     // photomode (bool)
     const photomodeEventKey = "zoning_adjuster_ui_namespace.photomode";
@@ -113,7 +111,7 @@ export const setupSubscriptions = () => {
             (photomodeEnabled) => {
                 console.log(`photomode update from C#: ${photomodeEnabled}`);
                 useModUIStore.getState().updatePhotomodeActive(photomodeEnabled);
-            }
+            },
         );
         allSubscriptions.set(photomodeEventKey, subscription);
     }
@@ -135,7 +133,7 @@ export const teardownSubscriptions = () => {
 export function updateEventFromCSharp<T>(
     ns: string,
     eventName: string,
-    callback: (value: T) => void
+    callback: (value: T) => void,
 ): () => void {
     console.log(`Subscribing to ${ns}.${eventName} events from C#.`);
 
@@ -156,7 +154,7 @@ export function updateEventFromCSharp<T>(
 export function sendDataToCSharp<T>(
     ns: string,
     eventName: string,
-    newValue: T
+    newValue: T,
 ): void {
     console.log(`Sending to C#: ${ns}.${eventName} =`, newValue);
     engine.trigger(`${ns}.${eventName}`, newValue);
@@ -165,7 +163,7 @@ export function sendDataToCSharp<T>(
 // Very simple HOC: wraps a component that expects ModUIState props
 // and returns a no-props component that reads from the Zustand store.
 export function withStore(
-    WrappedComponent: React.ComponentType<ModUIState>
+    WrappedComponent: React.ComponentType<ModUIState>,
 ): React.FC {
     const WithStore: React.FC = () => {
         const storeState = useModUIStore();
