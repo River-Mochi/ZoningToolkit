@@ -1,8 +1,6 @@
 // src/mods/zoning-toolkit-panel.module.scss
 // Floating, draggable Zone Tools panel styling.
 
-
-
 .panel {
     // Must remove panel from local positioning (to avoid affecting other mod buttons)
     position: absolute;
@@ -15,12 +13,3 @@
     // Ensure some minimum spacing between left/right columns
     padding-left: 16rem;
 }
-
-
-.panelHeader {
-    /* Let vanilla UI handle font size and color */
-    margin-bottom: 4rem;
-    font-size: inherit; /* Ensures vanilla styling */
-    color: inherit; /* Ensure color is handled by vanilla */
-}
-

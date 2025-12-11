@@ -117,7 +117,7 @@
 			<Output TaskParameter="ExitCode" PropertyName="NpmCiExit" />
 		</Exec>
 		<!-- Soft-fail (warn instead of error) -->
-		<Warning Condition="'$(NpmCiExit)' != '0'" Text="ZT UI: 'npm ci' failed (exit $(NpmCiExit)). Continuing C# build." />
+		<Warning Condition="'$(NpmCiExit)' != '0'" Text="ZONE TOOLS UI: 'npm ci' failed (exit $(NpmCiExit)). Continuing C# build." />
 		<!-- On success, write/update the stamp -->
 		<WriteLinesToFile Condition="'$(NpmCiExit)' == '0'" File="$(ProjectDir)zoning-toolkit-ui\node_modules\.stamp" Lines="ok" Overwrite="true" />
 	</Target>
@@ -129,7 +129,7 @@
 			<Output TaskParameter="ExitCode" PropertyName="NpmBuildExit" />
 		</Exec>
 		<!-- Soft-fail (warn instead of error) -->
-		<Warning Condition="'$(NpmBuildExit)' != '0'" Text="ZT UI: 'npm run build' failed (exit $(NpmBuildExit)). Continuing C# build." />
+		<Warning Condition="'$(NpmBuildExit)' != '0'" Text="ZONE TOOLS UI: 'npm run build' failed (exit $(NpmBuildExit)). Continuing C# build." />
 	</Target>
 
 	<!-- Optional: prints the active TargetFramework during build; remove anytime -->

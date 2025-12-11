@@ -1,4 +1,4 @@
-// zoning-toolkit-ui/src/index.tsx
+// src/index.tsx
 // Entry point for the Zone Tools UI (panel + GameTopLeft button).
 
 import React from "react";

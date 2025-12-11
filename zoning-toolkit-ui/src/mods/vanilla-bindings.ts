@@ -1,37 +1,36 @@
-/** src/mods/vanilla-bindings.ts */
+// src/mods/vanilla-bindings.ts
+// Thin wrappers over vanilla UI components (tooltip + tool button + focus keys).
 
 import { getModule } from "cs2/modding";
 import { ButtonProps, TooltipProps } from "cs2/ui";
-import { FC, ReactNode } from "react";
 
-/** NOTE: Vanilla prop types are a best-guess currently... */
-export interface DescriptionTooltipProps extends Omit<TooltipProps, 'tooltip'> {
+export interface DescriptionTooltipProps
+    extends Omit<TooltipProps, "tooltip"> {
     title: string | null;
     description: string | null;
-    content?: ReactNode | string | null;
+    content?: unknown;
 }
 
-/** Tooltip with title and description */
-const DescriptionTooltip: FC<DescriptionTooltipProps> = getModule(
+/** Tooltip with title and description (vanilla component). */
+const DescriptionTooltip = getModule(
     "game-ui/common/tooltip/description-tooltip/description-tooltip.tsx",
-    "DescriptionTooltip"
+    "DescriptionTooltip",
 );
 
-/** NOTE: Vanilla prop types are a best-guess currently... */
 export interface ToolButtonProps extends ButtonProps {
     /** Icon source */
     src: string;
     tooltip?: string;
 }
 
-/** Toolbar icon button (with selection state) */
-const ToolButton: FC<ToolButtonProps> = getModule(
+/** Toolbar icon button (with selection state, vanilla component). */
+const ToolButton = getModule(
     "game-ui/game/components/tool-options/tool-button/tool-button.tsx",
     "ToolButton",
 );
 
 /** Manually exported/bound modules that are not exported directly by CS2; use with caution! */
-export default {
+const VanillaBindings = {
     components: {
         DescriptionTooltip,
         ToolButton,
@@ -39,7 +38,12 @@ export default {
     common: {
         focus: {
             auto: getModule("game-ui/common/focus/focus-key.ts", "FOCUS_AUTO"),
-            disabled: getModule("game-ui/common/focus/focus-key.ts", "FOCUS_DISABLED"),
-        }
-    }
+            disabled: getModule(
+                "game-ui/common/focus/focus-key.ts",
+                "FOCUS_DISABLED",
+            ),
+        },
+    },
 };
+
+export default VanillaBindings;

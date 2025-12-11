@@ -53,33 +53,58 @@ namespace ZoningToolkit.Systems
                 toolEnabled = false
             };
 
-            // React to tool / prefab changes
+            // React to tool / prefab changes.
             m_ToolSystem.EventPrefabChanged =
-                (Action<PrefabBase>)Delegate.Combine(m_ToolSystem.EventPrefabChanged, new Action<PrefabBase>(OnPrefabChanged));
+                (Action<PrefabBase>)Delegate.Combine(
+                    m_ToolSystem.EventPrefabChanged,
+                    new Action<PrefabBase>(OnPrefabChanged));
             m_ToolSystem.EventToolChanged =
-                (Action<ToolBaseSystem>)Delegate.Combine(m_ToolSystem.EventToolChanged, new Action<ToolBaseSystem>(OnToolChanged));
+                (Action<ToolBaseSystem>)Delegate.Combine(
+                    m_ToolSystem.EventToolChanged,
+                    new Action<ToolBaseSystem>(OnToolChanged));
 
-            // C# -> UI bindings
-            AddUpdateBinding(new GetterValueBinding<string>(kGroup, "zoning_mode", () => m_UIState.zoningMode.ToString()));
-            AddUpdateBinding(new GetterValueBinding<bool>(kGroup, "tool_enabled", () => m_UIState.toolEnabled));
-            AddUpdateBinding(new GetterValueBinding<bool>(kGroup, "visible", () => m_UIState.visible));
-            AddUpdateBinding(new GetterValueBinding<bool>(kGroup, "photomode", () => m_PhotoMode.Enabled));
+            // C# -> UI bindings.
+            AddUpdateBinding(new GetterValueBinding<string>(
+                kGroup,
+                "zoning_mode",
+                () => m_UIState.zoningMode.ToString()));
 
-            // UI -> C# bindings
-            AddBinding(new TriggerBinding<string>(kGroup, "zoning_mode_update", zoningModeString =>
-            {
-                if (Enum.TryParse<ZoningMode>(zoningModeString, out ZoningMode mode))
+            AddUpdateBinding(new GetterValueBinding<bool>(
+                kGroup,
+                "tool_enabled",
+                () => m_UIState.toolEnabled));
+
+            AddUpdateBinding(new GetterValueBinding<bool>(
+                kGroup,
+                "visible",
+                () => m_UIState.visible));
+
+            AddUpdateBinding(new GetterValueBinding<bool>(
+                kGroup,
+                "photomode",
+                () => m_PhotoMode.Enabled));
+
+            // UI -> C# bindings.
+            AddBinding(new TriggerBinding<string>(
+                kGroup,
+                "zoning_mode_update",
+                zoningModeString =>
                 {
-                    Mod.s_Log.Info($"Zone Tools UI: zoning mode updated to {mode}");
-                    m_UIState.zoningMode = mode;
-                }
-            }));
+                    if (Enum.TryParse<ZoningMode>(zoningModeString, out var mode))
+                    {
+                        Mod.s_Log.Info($"[ZT] Zone Tools UI: zoning mode updated to {mode}");
+                        m_UIState.zoningMode = mode;
+                    }
+                }));
 
-            AddBinding(new TriggerBinding<bool>(kGroup, "tool_enabled", enabled =>
-            {
-                Mod.s_Log.Info($"Zone Tools UI: tool_enabled set to {enabled}");
-                ToggleTool(enabled);
-            }));
+            AddBinding(new TriggerBinding<bool>(
+                kGroup,
+                "tool_enabled",
+                enabled =>
+                {
+                    Mod.s_Log.Info($"[ZT] Zone Tools UI: tool_enabled set to {enabled}");
+                    ToggleTool(enabled);
+                }));
         }
 
         // Called from Mod.cs / ZoneToolSystemKeybind when keybind fires.
@@ -115,7 +140,7 @@ namespace ZoningToolkit.Systems
 
         private void OnToolChanged(ToolBaseSystem tool)
         {
-            // Only show UI when the active tool is a net tool with a zoning-capable road prefab
+            // Only show UI when the active tool is a net tool with a zoning-capable road prefab.
             if (tool is NetToolSystem netTool &&
                 netTool.GetPrefab() is RoadPrefab roadPrefab &&
                 roadPrefab.m_ZoneBlock != null)
@@ -144,7 +169,7 @@ namespace ZoningToolkit.Systems
         {
             base.OnUpdate();
 
-            // Apply pending show/hide state driven by tool / prefab changes
+            // Apply pending show/hide state driven by tool / prefab changes.
             if (m_ActivateUI)
             {
                 m_ActivateUI = false;
@@ -169,7 +194,7 @@ namespace ZoningToolkit.Systems
                 }
             }
 
-            // Sync UI -> tool/system
+            // Sync UI -> tool/system.
             if (m_UIState.zoningMode != m_Tool.workingState.zoningMode)
             {
                 ZoneToolSystemExistingRoads.WorkingState ws = m_Tool.workingState;
@@ -182,7 +207,7 @@ namespace ZoningToolkit.Systems
                 m_ZoningSystem.zoningMode = m_UIState.zoningMode;
             }
 
-            // Sync tool -> UI (tool enabled flag)
+            // Sync tool -> UI (tool enabled flag).
             if (m_UIState.toolEnabled != m_Tool.toolEnabled)
             {
                 m_UIState.toolEnabled = m_Tool.toolEnabled;

@@ -1,36 +1,52 @@
 ﻿// src/mods/zoning-toolkit-button.tsx
-// GameTopLeft icon button that toggles the Zone Tools zoning tool on/off.
+// GameTopLeft floating action button that toggles the Zone Tools panel.
 
-import React from "react";
 import { Button } from "cs2/ui";
-import { useLocalization } from "cs2/l10n";
-import { useModUIStore } from "./state";
+import React, { CSSProperties } from "react";
+
 import menuIcon from "../../assets/icons/menu_icon.svg";
+import menuButtonStyles from "./zoning-toolkit-button.module.scss";
+import { useModUIStore, withStore } from "./state";
+import VanillaBindings from "./vanilla-bindings";
 
-import styles from "./zoning-toolkit-button.module.scss";
+const { DescriptionTooltip } = VanillaBindings.components;
 
-export const ZoningToolkitMenuButton: React.FC = () => {
-    const { translate } = useLocalization();
-
-    const isToolEnabled = useModUIStore((state) => state.isToolEnabled);
-    const updateIsToolEnabled = useModUIStore(
-        (state) => state.updateIsToolEnabled,
-    );
-
-    const tooltipLabel = translate("ZoneTools.ToolName", "Zone Tools");
-
-    const handleClick = () => {
-        // Toggle the visibility of the panel.
-        useModUIStore.getState().updateUiVisible(!useModUIStore.getState().uiVisible);
+class ZoningToolkitMenuButtonInternal extends React.Component {
+    handleMenuButtonClick = () => {
+        console.log("ZoningToolkit: Clicked toolkit menu button");
+        const store = useModUIStore.getState();
+        store.updateUiVisible(!store.uiVisible);
     };
 
-    return (
-        <Button
-            variant="icon"
-            src={menuIcon}
-            tooltipLabel={tooltipLabel}
-            onClick={handleClick}
-            className={styles.menuIcon}
-        />
-    );
-};
+    render() {
+        const photomodeActive = useModUIStore.getState().photomodeActive;
+
+        const buttonStyle: CSSProperties = {
+            // Menu button should be hidden in photo mode
+            display: photomodeActive ? "none" : undefined,
+        };
+
+        return (
+            <DescriptionTooltip
+                description="Control/modify zoning along roads. Allows zoning on both sides of roads, on any one side, or no sides at all."
+                direction="right"
+                title="Zone Tools"
+            >
+                <Button
+                    style={buttonStyle}
+                    variant="floating"
+                    onClick={this.handleMenuButtonClick}
+                >
+                    <img
+                        src={menuIcon}
+                        className={menuButtonStyles.menuIcon}
+                    />
+                </Button>
+            </DescriptionTooltip>
+        );
+    }
+}
+
+export const ZoningToolkitMenuButton = withStore(
+    ZoningToolkitMenuButtonInternal,
+);
