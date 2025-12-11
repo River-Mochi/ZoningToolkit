@@ -34,6 +34,35 @@ namespace ZoningToolkit
         // CO-style logger
         public static readonly ILog s_Log = LogManager.GetLogger(ModId);
 
+        /// <summary>
+        /// Debug logging flag for verbose logs (UI events, tool chatter, etc.).
+        /// In DEBUG builds this defaults to true; in RELEASE builds it defaults to false.
+        /// Can flip this at runtime if code added to expose it via settings toggle.
+        /// </summary>
+        public static bool DebugLoggingEnabled
+        {
+            get; set;
+        } =
+#if DEBUG
+            true;
+#else
+            false;
+#endif
+
+        /// <summary>
+        /// Helper for verbose debug logging routed through the CO logger.
+        /// This keeps ZoneTools.log much smaller in Release builds.
+        /// </summary>
+        public static void Debug(string message)
+        {
+            if (!DebugLoggingEnabled)
+            {
+                return;
+            }
+
+            s_Log.Info(message);
+        }
+
         // Active settings (Options UI)
         public static Setting? Settings
         {

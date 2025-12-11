@@ -53,12 +53,16 @@ export class ZoningToolkitPanelInternal extends React.Component {
         const photomodeActive = useModUIStore.getState().photomodeActive;
 
         const panelStyle: CSSProperties = {
-            // Toolkit panel should be hidden in photo mode
+            // Panel is hidden in photo mode or when not visible.
             display: !uiVisible || photomodeActive ? "none" : undefined,
         };
 
         return (
-            <Draggable bounds="parent" grid={[10, 10]}>
+            <Draggable
+                bounds="parent"
+                grid={[10, 10]}
+                enableUserSelectHack={false} // Disable injected ::selection/-moz-selection styles prevent UI.log warn.
+            >
                 <Panel
                     className={panelStyles.panel}
                     header="Zone Tools"

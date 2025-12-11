@@ -5,6 +5,9 @@
     // Must remove panel from local positioning (to avoid affecting other mod buttons)
     position: absolute;
     top: 50rem;
+
+    // Let vanilla style most of it, but keep the panel from growing too wide.
+    max-width: 380rem;
 }
 
 .panelToolModeRow {

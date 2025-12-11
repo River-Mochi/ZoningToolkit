@@ -92,7 +92,7 @@ namespace ZoningToolkit.Systems
                 {
                     if (Enum.TryParse<ZoningMode>(zoningModeString, out var mode))
                     {
-                        Mod.s_Log.Info($"[ZT] Zone Tools UI: zoning mode updated to {mode}");
+                        Mod.Debug($"[ZT] Zone Tools UI: zoning mode updated to {mode}");
                         m_UIState.zoningMode = mode;
                     }
                 }));
@@ -102,7 +102,7 @@ namespace ZoningToolkit.Systems
                 "tool_enabled",
                 enabled =>
                 {
-                    Mod.s_Log.Info($"[ZT] Zone Tools UI: tool_enabled set to {enabled}");
+                    Mod.Debug($"[ZT] Zone Tools UI: tool_enabled set to {enabled}");
                     ToggleTool(enabled);
                 }));
         }
@@ -112,7 +112,7 @@ namespace ZoningToolkit.Systems
         internal void TogglePanelFromHotkey()
         {
             m_UIState.visible = !m_UIState.visible;
-            Mod.s_Log.Info($"[ZT] TogglePanelFromHotkey: m_UIState.visible = {m_UIState.visible}");
+            Mod.Debug($"[ZT] TogglePanelFromHotkey: m_UIState.visible = {m_UIState.visible}");
         }
 
         // Used by the zoning tool to read / change the active mode.
