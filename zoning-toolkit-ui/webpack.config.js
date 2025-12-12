@@ -1,5 +1,3 @@
-/* eslint-env node */
-/* eslint-disable @typescript-eslint/no-require-imports, no-undef */
 const path = require("path");
 const MOD = require("./mod.json");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");

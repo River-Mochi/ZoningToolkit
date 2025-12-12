@@ -71,7 +71,6 @@ export class ZoningToolkitPanelInternal extends React.Component {
             <Draggable
 
                 bounds="parent" grid={[5, 5]}
-                enableUserSelectHack={false} // Prevents injected ::selection/-moz-selection CSS.
             >
                 <Panel
                     className={panelStyles.panel}

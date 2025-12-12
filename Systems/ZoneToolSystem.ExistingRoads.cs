@@ -439,6 +439,44 @@ namespace ZoningToolkit.Systems
             }
         }
 
+        private ToolBaseSystem? FindReturnTool()
+        {
+            // Prefer any non-Net tool (avoids popping open the road UI when turning our helper off).
+            List<ToolBaseSystem> tools = m_ToolSystem.tools;
+
+            ToolBaseSystem? fallback = null;
+
+            foreach (ToolBaseSystem tool in tools)
+            {
+                if (tool == null || tool == this)
+                {
+                    continue;
+                }
+
+                fallback ??= tool;
+
+                if (tool is not NetToolSystem)
+                {
+                    return tool;
+                }
+            }
+
+            // Fallback: any other tool at all.
+            if (fallback != null)
+            {
+                return fallback;
+            }
+
+            // Last resort: if active tool isn't us, return it.
+            ToolBaseSystem active = m_ToolSystem.activeTool;
+            if (active != null && active != this)
+            {
+                return active;
+            }
+
+            return null;
+        }
+
 
         private void CycleZoningMode()
         {
