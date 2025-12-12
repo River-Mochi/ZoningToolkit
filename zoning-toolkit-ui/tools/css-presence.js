@@ -1,5 +1,7 @@
-const { RawSource } = require("webpack").sources;
+/* eslint-env node */
+/* eslint-disable no-undef */
 
+const { RawSource } = require("webpack").sources;
 exports.CSSPresencePlugin = class CSSPresencePlugin {
   apply(compiler) {
     compiler.hooks.compilation.tap("CSSPresencePlugin", (compilation) => {
