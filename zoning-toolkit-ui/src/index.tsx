@@ -16,28 +16,25 @@ const register: ModRegistrar = (moduleRegistry) => {
 
     // While launching game in UI development mode (include --uiDeveloperMode in the launch options)
     // - Access the dev tools by opening localhost:9444 in chrome browser.
-    // - use the useModding() hook to access exposed UI, api and native coherent engine interfaces. 
+    // - use the useModding() hook to access exposed UI, api and native coherent engine interfaces.
     // Mount React UI into GameTopLeft.
     moduleRegistry.append("GameTopLeft", () => <ZoningToolkitUi />);
 };
 
-class ZoningToolkitUi extends React.Component<Record<string, never>> {
-    componentDidMount() {
+function ZoningToolkitUi() {
+    React.useEffect(() => {
         setupSubscriptions();
-    }
+        return () => {
+            teardownSubscriptions();
+        };
+    }, []);
 
-    componentWillUnmount() {
-        teardownSubscriptions();
-    }
-
-    render() {
-        return (
-            <>
-                <ZoningToolkitPanel />
-                <ZoningToolkitMenuButton />
-            </>
-        );
-    }
+    return (
+        <>
+            <ZoningToolkitPanel />
+            <ZoningToolkitMenuButton />
+        </>
+    );
 }
 
 export default register;
