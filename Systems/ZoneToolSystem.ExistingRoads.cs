@@ -399,7 +399,17 @@ namespace ZoningToolkit.Systems
             if (!toolEnabled)
             {
                 toolEnabled = true;
-                m_PreviousToolSystem = m_ToolSystem.activeTool;
+
+                ToolBaseSystem current = m_ToolSystem.activeTool;
+                m_PreviousToolSystem = current;
+
+                // If the current tool is the road placement tool, do NOT return to it later
+                // (it pops open the vanilla road UI and can steal LMB behavior).
+                if (current is NetToolSystem)
+                {
+                    m_PreviousToolSystem = FindReturnTool();
+                }
+
                 m_ToolSystem.activeTool = this;
             }
         }
@@ -410,12 +420,25 @@ namespace ZoningToolkit.Systems
             {
                 toolEnabled = false;
 
-                if (m_ToolSystem.activeTool == this && m_PreviousToolSystem != null)
+                if (m_ToolSystem.activeTool == this)
                 {
-                    m_ToolSystem.activeTool = m_PreviousToolSystem;
+                    ToolBaseSystem? returnTool = m_PreviousToolSystem;
+
+                    if (returnTool == null || returnTool == this || returnTool is NetToolSystem)
+                    {
+                        returnTool = FindReturnTool();
+                    }
+
+                    if (returnTool != null)
+                    {
+                        m_ToolSystem.activeTool = returnTool;
+                    }
                 }
+
+                m_PreviousToolSystem = null;
             }
         }
+
 
         private void CycleZoningMode()
         {

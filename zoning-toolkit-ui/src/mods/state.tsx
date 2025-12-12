@@ -184,6 +184,11 @@ export function sendDataToCSharp<T>(
     engine.trigger(`${ns}.${eventName}`, newValue);
 }
 
+// Trigger Zone Tools panel toggle via C# bridge (used by FAB).
+export function togglePanelFromUI(): void {
+    sendDataToCSharp(NS, "toggle_panel", true);
+}
+
 // Very simple HOC: wraps a component that expects (optionally) ModUIState props
 // and returns a no-props component that reads from the Zustand store.
 export function withStore(

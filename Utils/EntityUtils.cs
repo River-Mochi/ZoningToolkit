@@ -1,4 +1,5 @@
-// Utils/EntityUtils.cs
+// Utils/EntityUtils.cs Debug inspect helper
+// Dump component types on an entity (or entities in a query) to console/log.
 
 namespace ZoningToolkit.Utils
 {

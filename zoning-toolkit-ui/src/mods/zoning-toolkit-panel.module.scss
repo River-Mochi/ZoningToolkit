@@ -7,12 +7,12 @@
     top: 50rem;
 
     // Let vanilla style most of it, but keep the panel from growing too wide.
-    max-width: 380rem;
+    // max-width: 380rem;
 }
 
 .panelToolModeRow {
     display: flex;
     flex-direction: row;
     // Ensure some minimum spacing between left/right columns
-    padding-left: 16rem;
+    padding-left: 14rem;
 }

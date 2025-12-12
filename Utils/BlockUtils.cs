@@ -1,4 +1,6 @@
 // Utils/BlockUtils.cs
+// turns zoning area on/off by setting validArea.m_Area.w and block.m_Size.y to 0 or 6 depending on mode + side.
+// Checks CellFlags.Occupied in the area and returns true if any cell is occupied. Protects occupied areas from zone changes.
 
 namespace ZoningToolkit.Utils
 {

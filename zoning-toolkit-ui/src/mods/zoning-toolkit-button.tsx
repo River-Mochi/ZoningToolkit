@@ -6,16 +6,16 @@ import { Button } from "cs2/ui";
 
 import menuIcon from "../../assets/icons/menu_icon.svg";
 import menuButtonStyles from "./zoning-toolkit-button.module.scss";
-import { useModUIStore, withStore } from "./state";
+import { useModUIStore, withStore, togglePanelFromUI } from "./state";
 import VanillaBindings from "./vanilla-bindings";
 
 const { DescriptionTooltip } = VanillaBindings.components;
 
 class ZoningToolkitMenuButtonInternal extends React.Component {
     private handleMenuButtonClick = (): void => {
-        const store = useModUIStore.getState();
-        store.updateUiVisible(!store.uiVisible);
+        togglePanelFromUI();
     };
+
 
     public render(): JSX.Element | null {
         const store = useModUIStore.getState();

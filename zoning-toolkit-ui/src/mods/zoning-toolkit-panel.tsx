@@ -24,17 +24,29 @@ interface ZoningModeButtonConfig {
 }
 
 const zoningModeButtonConfigs: ZoningModeButtonConfig[] = [
-    { icon: zoneModeIconMap[ZoningMode.DEFAULT], mode: ZoningMode.DEFAULT, tooltip: "Default (both)" },
-    { icon: zoneModeIconMap[ZoningMode.LEFT], mode: ZoningMode.LEFT, tooltip: "Left" },
-    { icon: zoneModeIconMap[ZoningMode.RIGHT], mode: ZoningMode.RIGHT, tooltip: "Right" },
-    { icon: zoneModeIconMap[ZoningMode.NONE], mode: ZoningMode.NONE, tooltip: "None" },
+    {
+        icon: zoneModeIconMap[ZoningMode.DEFAULT],
+        mode: ZoningMode.DEFAULT,
+        tooltip: "Default (both)",
+    },
+    {
+        icon: zoneModeIconMap[ZoningMode.LEFT],
+        mode: ZoningMode.LEFT,
+        tooltip: "Left",
+    },
+    {
+        icon: zoneModeIconMap[ZoningMode.RIGHT],
+        mode: ZoningMode.RIGHT,
+        tooltip: "Right",
+    },
+    {
+        icon: zoneModeIconMap[ZoningMode.NONE],
+        mode: ZoningMode.NONE,
+        tooltip: "None",
+    },
 ];
 
 export class ZoningToolkitPanelInternal extends React.Component {
-    subscriptionZoningMode?: () => void;
-    subscriptionToolEnabled?: () => void;
-    subscriptionVisible?: () => void;
-
     handleZoneModeSelect(zoningMode: ZoningMode) {
         useModUIStore.getState().updateZoningMode(zoningMode.toString());
     }
@@ -44,13 +56,11 @@ export class ZoningToolkitPanelInternal extends React.Component {
     }
 
     render() {
-        const currentZoningMode = getModeFromString(
-            useModUIStore.getState().zoningMode,
-        );
-        const isToolEnabled = useModUIStore.getState().isToolEnabled;
-
-        const uiVisible = useModUIStore.getState().uiVisible;
-        const photomodeActive = useModUIStore.getState().photomodeActive;
+        const store = useModUIStore.getState();
+        const currentZoningMode = getModeFromString(store.zoningMode);
+        const isToolEnabled = store.isToolEnabled;
+        const uiVisible = store.uiVisible;
+        const photomodeActive = store.photomodeActive;
 
         const panelStyle: CSSProperties = {
             // Panel is hidden in photo mode or when not visible.
@@ -59,9 +69,9 @@ export class ZoningToolkitPanelInternal extends React.Component {
 
         return (
             <Draggable
-                bounds="parent"
-                grid={[10, 10]}
-                enableUserSelectHack={false} // Disable injected ::selection/-moz-selection styles prevent UI.log warn.
+
+                bounds="parent" grid={[5, 5]}
+                enableUserSelectHack={false} // Prevents injected ::selection/-moz-selection CSS.
             >
                 <Panel
                     className={panelStyles.panel}
@@ -70,7 +80,7 @@ export class ZoningToolkitPanelInternal extends React.Component {
                 >
                     <PanelSection>
                         <PanelSectionRow
-                            left="Tool Mode"
+                            left="Pick One"
                             right={
                                 <div className={panelStyles.panelToolModeRow}>
                                     {zoningModeButtonConfigs.map((config) => (
@@ -105,7 +115,7 @@ export class ZoningToolkitPanelInternal extends React.Component {
                                     }
                                     selected={isToolEnabled}
                                     src={updateToolIcon}
-                                    tooltip="Toggle zoning update tool (for existing roads). Note that roads with zoned buildings will skip rezoning (for safety)."
+                                    tooltip="Toggle update tool (for existing roads). Roads with zoned buildings are skipped."
                                     onSelect={() =>
                                         this.handleZoneToolSelect(!isToolEnabled)
                                     }
