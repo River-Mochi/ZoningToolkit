@@ -47,14 +47,16 @@ This is to prevent the buildings from being despawned when the zoning is removed
 
 	</LongDescription>
 	<!--Thumbnail-->
-<Thumbnail Value="Properties/ZoneTools.jpg" />
+<Thumbnail Value="Properties/10Thumbnail.jpg" />
 <!--Screenshot, can be set multiple times-->
+<Screenshot Value="Properties/ss10-panel.jpg" />
+<Screenshot Value="Properties/ss20-roads.jpg" />
 <!--Tag, can be set multiple times-->
 <Tag Value="Code Mod" />
 <!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/zone-tool-redux.1888663/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0.1" />
+	<ModVersion Value="1.0.2" />
 <!--Recommended version of the base game to use the mod-->
 <GameVersion Value="1.5.*" />
 	<!--Dependency for the mod, can be set multiple times-->
@@ -62,6 +64,7 @@ This is to prevent the buildings from being despawned when the zoning is removed
 	<!--Changelog for new version. Single line or multi line. Supports minimal markdown subset-->
 <ChangeLog Value="" />
 <ChangeLog>
+- Smaller Zone Tool Panel
 - Add Language Support:
 - Français French, Deutsch German, Español Spanish, Italiano Italian,
 - 한국어 Korean, 日本語 Japanese, 简体中文 Simplified Chinese,
