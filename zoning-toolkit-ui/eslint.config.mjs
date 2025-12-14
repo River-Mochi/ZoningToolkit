@@ -1,22 +1,37 @@
-// eslint.config.mjs
-// Flat config for Zone Tools UI (React + TypeScript, ESLint 9).
+﻿// eslint.config.mjs
+// Flat config for Zone Tools UI (ESLint 9 + React + TypeScript).
+// IMPORTANT: We only lint mod source under /src.
+// We explicitly ignore Node/CommonJS build scripts (webpack.config.js, tools/*) and toolchain types.
 
 import eslintJs from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 import reactPlugin from "eslint-plugin-react";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
 
-// Use typescript-eslint's flat-config helper to compose configs.
 export default tseslint.config(
+    // Ignore everything we do NOT want VS/ESLint to lint
+    {
+        ignores: [
+            "**/node_modules/**",
+            "**/build/**",
+            "**/types/**",
+            "**/tools/**",
+            "webpack.config.js",
+            "webpack.*.js",
+            "**/*.d.ts",
+        ],
+    },
+
     // Base JS recommended rules
     eslintJs.configs.recommended,
 
-    // Base TS rules (no type-checking, fine for this UI mod)
+    // Base TS rules (no type-checking)
     ...tseslint.configs.recommended,
 
-    // Project-specific config: React + browser globals + custom rules
+    // Lint ONLY your actual mod source
     {
-        files: ["**/*.{ts,tsx,js,jsx}"],
+        files: ["src/**/*.{ts,tsx,js,jsx}"],
         languageOptions: {
             ecmaVersion: "latest",
             sourceType: "module",
@@ -27,17 +42,14 @@ export default tseslint.config(
         },
         plugins: {
             react: reactPlugin,
+            "react-hooks": reactHooksPlugin,
         },
         settings: {
-            react: {
-                version: "detect",
-            },
+            react: { version: "detect" },
         },
         rules: {
-            // Turn off base rule and use TS version instead
+            // Prefer TS unused-vars rule
             "no-unused-vars": "off",
-
-            // Allow leading "_" for intentionally unused vars/args
             "@typescript-eslint/no-unused-vars": [
                 "error",
                 {
@@ -50,9 +62,12 @@ export default tseslint.config(
                 },
             ],
 
-            // React rules that don't make sense for CS2 UI
+            // React rules that don’t apply with modern JSX transform / TS
             "react/react-in-jsx-scope": "off",
             "react/prop-types": "off",
+
+            // Hooks rules (same as plugin:react-hooks/recommended)
+            ...reactHooksPlugin.configs.recommended.rules,
         },
     },
 );

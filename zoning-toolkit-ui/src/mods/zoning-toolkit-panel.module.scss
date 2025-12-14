@@ -1,18 +1,24 @@
 // src/mods/zoning-toolkit-panel.module.scss
 // Floating, draggable Zone Tools panel styling.
+// Keep minimal so vanilla handles visuals/layout as much as possible.
 
 .panel {
     // Must remove panel from local positioning (to avoid affecting other mod buttons)
     position: absolute;
     top: 50rem;
-
-    // Let vanilla style most of it, but keep the panel from growing too wide.
+    // Let vanilla style most of it.
     // max-width: 380rem;
 }
 
 .panelToolModeRow {
     display: flex;
     flex-direction: row;
-    // Ensure some minimum spacing between left/right columns
-    padding-left: 14rem;
+    // With no left label on the first row, don't indent the icons.
+    padding-left: 0;
+    // Slight spacing between buttons (scales with resolution).
+    gap: 6rem;
+}
+
+.rowLabelNoWrap {
+    white-space: nowrap;
 }

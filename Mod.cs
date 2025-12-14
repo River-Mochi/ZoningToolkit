@@ -5,6 +5,7 @@ namespace ZoningToolkit
 {
     using System;
     using System.Reflection;
+    using Colossal;                       // IDictionarySource
     using Colossal.IO.AssetDatabase;
     using Colossal.Localization;
     using Colossal.Logging;
@@ -98,9 +99,18 @@ namespace ZoningToolkit
             var setting = new Setting(this);
             Settings = setting;
 
-            GameManager? gm = GameManager.instance;
-            LocalizationManager? lm = gm?.localizationManager;
-            lm?.AddSource("en-US", new LocaleEN(setting));
+            // Register languages via helper
+            AddLocaleSource("en-US", new LocaleEN(setting));
+            AddLocaleSource("fr-FR", new LocaleFR(setting));
+            AddLocaleSource("es-ES", new LocaleES(setting));
+            AddLocaleSource("de-DE", new LocaleDE(setting));
+            AddLocaleSource("it-IT", new LocaleIT(setting));
+            AddLocaleSource("ja-JP", new LocaleJA(setting));
+            AddLocaleSource("ko-KR", new LocaleKO(setting));
+            AddLocaleSource("pl-PL", new LocalePL(setting));
+            AddLocaleSource("pt-BR", new LocalePT_BR(setting));
+            AddLocaleSource("zh-HANS", new LocaleZH_CN(setting));        // Simplified Chinese
+            AddLocaleSource("zh-HANT", new LocaleZH_HANT(setting));      // Traditional Chinese
 
             // Load saved values, then register Options UI.
             AssetDatabase.global.LoadSettings(ModId, setting, new Setting(this));
@@ -156,6 +166,38 @@ namespace ZoningToolkit
             {
                 Settings.UnregisterInOptionsUI();
                 Settings = null;
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // Localization helper
+        // --------------------------------------------------------------------
+
+        /// <summary>
+        /// Wrapper for LocalizationManager.AddSource that catches exceptions
+        /// so localization issues can't break mod loading.
+        /// </summary>
+        private static void AddLocaleSource(string localeId, IDictionarySource source)
+        {
+            if (string.IsNullOrEmpty(localeId))
+            {
+                return;
+            }
+
+            LocalizationManager? lm = GameManager.instance?.localizationManager;
+            if (lm == null)
+            {
+                s_Log.Warn($"AddLocaleSource: No LocalizationManager; cannot add source for '{localeId}'.");
+                return;
+            }
+
+            try
+            {
+                lm.AddSource(localeId, source);
+            }
+            catch (Exception ex)
+            {
+                s_Log.Warn($"AddLocaleSource: AddSource for '{localeId}' failed: {ex.GetType().Name}: {ex.Message}");
             }
         }
     }

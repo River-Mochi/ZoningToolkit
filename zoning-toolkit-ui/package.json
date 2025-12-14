@@ -8,6 +8,7 @@
     "build": "webpack",
     "dev": "webpack --watch",
     "update": "npx create-csii-ui-mod update",
+    "postupdate": "node tools/patch-tsconfig.js",
     "delete": "npx create-csii-ui-mod delete",
     "clean": "npx create-csii-ui-mod clean",
     "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\""
@@ -30,6 +31,7 @@
     "css-loader": "6.7.2",
     "eslint": "^9.39.1",
     "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^16.5.0",
     "mini-css-extract-plugin": "2.7.0",
     "sass": "^1.69.5",

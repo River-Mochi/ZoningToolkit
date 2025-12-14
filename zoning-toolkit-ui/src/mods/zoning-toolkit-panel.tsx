@@ -1,7 +1,14 @@
 ﻿// src/mods/zoning-toolkit-panel.tsx
 // Floating panel for Zone Tools (zoning mode picker + update tool toggle).
+//
+// - Row 1: remove "Pick One" text (icons only).
+// - Row 2: rename to "Update Existing Road" and keep it one-line by placing the label in the RIGHT column
+//         (the right column has the width; the left column is narrow and wraps).
 
-import React, { CSSProperties } from "react";
+// src/mods/zoning-toolkit-panel.tsx
+// Floating panel for Zone Tools (zoning mode picker + update tool toggle).
+
+import React from "react";
 import Draggable from "react-draggable";
 import { Panel, PanelSection, PanelSectionRow } from "cs2/ui";
 
@@ -62,24 +69,22 @@ export class ZoningToolkitPanelInternal extends React.Component {
         const uiVisible = store.uiVisible;
         const photomodeActive = store.photomodeActive;
 
-        const panelStyle: CSSProperties = {
+        const panelStyle: React.CSSProperties = {
             // Panel is hidden in photo mode or when not visible.
             display: !uiVisible || photomodeActive ? "none" : undefined,
         };
 
         return (
-            <Draggable
-
-                bounds="parent" grid={[5, 5]}
-            >
+            <Draggable bounds="parent" grid={[5, 5]}>
                 <Panel
                     className={panelStyles.panel}
                     header="Zone Tools"
                     style={panelStyle}
                 >
                     <PanelSection>
+                        {/* Top row: icons only (no "Pick One" label) */}
                         <PanelSectionRow
-                            left="Pick One"
+                            left=""
                             right={
                                 <div className={panelStyles.panelToolModeRow}>
                                     {zoningModeButtonConfigs.map((config) => (
@@ -105,8 +110,14 @@ export class ZoningToolkitPanelInternal extends React.Component {
                                 </div>
                             }
                         />
+
+                        {/* Second row: rename label, keep it on one line */}
                         <PanelSectionRow
-                            left="Update Tool"
+                            left={
+                                <span className={panelStyles.rowLabelNoWrap}>
+                                    Update Road
+                                </span>
+                            }
                             right={
                                 <ToolButton
                                     focusKey={

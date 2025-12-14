@@ -1,16 +1,16 @@
-// Settings/LocaleEN.cs
-// English en-US for Zone Tools.
+// Settings/LocaleFR.cs
+// French fr-FR for Zone Tools.
 
 namespace ZoningToolkit
 {
     using System.Collections.Generic;
     using Colossal;
 
-    public sealed class LocaleEN : IDictionarySource
+    public sealed class LocaleFR : IDictionarySource
     {
         private readonly Setting m_Setting;
 
-        public LocaleEN(Setting setting)
+        public LocaleFR(Setting setting)
         {
             m_Setting = setting;
         }
@@ -25,28 +25,28 @@ namespace ZoningToolkit
                 { m_Setting.GetSettingsLocaleID(), Mod.ModName + " " + Mod.ModTag },
 
                 // Tabs
-                { m_Setting.GetOptionTabLocaleID(Setting.kAboutTab), "About" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kAboutTab), "À propos" },
 
                 // Groups
-                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),    "About"        },
-                { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup), "Key bindings" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),    "À propos" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup), "Raccourcis clavier" },
 
                 // About fields
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "Mod name" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModName)),     "Display name of this mod." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "Nom du mod" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModName)),     "Nom affiché de ce mod." },
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModVersion)), "Version" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Current Zone Tools version." },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Version actuelle de Zone Tools." },
 
                 // Keybinding option (Options → Mods)
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "Toggle panel" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "Afficher/masquer le panneau" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.TogglePanelBinding)),
-                    "Keyboard shortcut to show or hide the Zone Tools panel (same as clicking the top-left menu icon)."
+                    "Raccourci clavier pour afficher ou masquer le panneau Zone Tools (identique au clic sur l’icône du menu en haut à gauche)."
                 },
 
                 // Keybinding name (Options → Keybindings)
-                { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Toggle panel" },
+                { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Afficher/masquer le panneau" },
             };
 
             return d;
