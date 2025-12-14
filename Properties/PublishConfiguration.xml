@@ -4,10 +4,11 @@
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="Zone Tools" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="A tool to control zoning on roads for City Skylines 2." />
+	<ShortDescription Value="Change zoning on any side of a road." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<LongDescription>### Zone Tools Redux
-This tool provides control of the zoning along a city's roads. Zoning can be enabled on both sides of roads, on any one side, or no sides at all.
+
+Control of the zoning along any zonable road. Zoning can be enabled on both sides of roads, on left or right only, or no sides at all.
 This enables finer control of where buildings will spawn, as well as placing roads close together without overlapping/conflicting zones.
 
 ## Usage
@@ -15,46 +16,49 @@ This enables finer control of where buildings will spawn, as well as placing roa
 The tool can be used both for placing new roads and updating existing roads.
 
 ### New roads
-* Open the zoning options by clicking on the zoning button (top-left)
-* Select desired zoning option (default, left, right, none)
-* Draw new road with desired zoning applied (zoning side depends on the direction the road is drawn)
+* Open zoning panel by clicking on the button (top-left) or hotkey (default shift+Z)
+* Select default (both), left, right, none.
+* Draw a new road with (note: zoning side depends on the direction the road is drawn)
 
-### Existing roads:     
-* Open the zoning options by clicking on the zoning button (top-left)
-* Select desired zoning option (default, left, right, none)
-* Select the "update zoning" button in the zoning options panel (select again to turn off)
+### Update Existing Roads (UER):     
+* Open the same zoning panel (top-left button or hotkey)
+* Enable the "update" button, recycle icon (select again to turn off)
+* Select the side of the road you want (default, left, right, none)
 * Click on roads to update their zoning (supports click-and-drag for updating multiple roads)
+* Left Mouse applies the zoning change. New: right mouse Cycles through the 4 zone choices so you do not need to click icon again
+* You can change the side you want by clicking the icon or use Right mouse click to cycle.
 
 ## Notes
 
-Please note that if you have buildings on a road, the zoning will not be toggled when updating zoning!
+Please note that if you have buildings on a road, for safety, the zoning will skip them so they are not destroyed!
 This is to prevent the buildings from being despawned when the zoning is removed.
 
 Credits:
-
+- River-mochi current author and maintainer
+- thanks to original zeeshanabid94 for original ZoningToolKit (retired)
+- thanks to yenyang for technical support
 
 	</LongDescription>
 	<!--Thumbnail-->
-	<Thumbnail Value="Properties/ZoningToolkit.png" />
-	<!--Screenshot, can be set multiple times-->
-	<Screenshot Value="Properties/Screenshot_PanelAndZoning.png" />
-	<!--Tag, can be set multiple times-->
-	<Tag Value="Code Mod" />
-	<!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/zoning-toolkit.1644669/" />
+<Thumbnail Value="Properties/ZoneTools.jpg" />
+<!--Screenshot, can be set multiple times-->
+<!--Tag, can be set multiple times-->
+<Tag Value="Code Mod" />
+<!--Link to the forum post where the mod can be discussed-->
+	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/zone-tool-redux.1888663/" />
 	<!--Version of the mod-->
 	<ModVersion Value="1.0.1" />
-	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.5.*" />
+<!--Recommended version of the base game to use the mod-->
+<GameVersion Value="1.5.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Changelog for new version. Single line or multi line. Supports minimal markdown subset-->
-	<ChangeLog Value="
-- Fix update tool
-			   " />
-	<ExternalLink Type="github" Url="https://github.com/zeeshanabid94/ZoningToolkit" />
-	<ExternalLink Type="buymeacoffee" Url="https://buymeacoffee.com/zeeshanabid94" />
-	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
-	<!-- <ExternalLink Type="discord" Url="stormborn0048" />
-	<ExternalLink Type="youtube" Url="coming_soon" /> -->
+<ChangeLog Value="" />
+<!--<ChangeLog>
+</ChangeLog>-->
+<ExternalLink Type="discord" Url="https://discord.gg/HTav7ARPs2" />
+<ExternalLink Type="github" Url="https://github.com/River-Mochi/ZoneTools" />
+<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon-->
+<!-- <ExternalLink Type="discord" Url="stormborn0048" />
+<ExternalLink Type="youtube" Url="coming_soon" /> -->
 </Publish>

@@ -13,7 +13,7 @@ namespace ZoningToolkit
     [SettingsUIGroupOrder(kAboutGroup, kBindingsGroup)]
     [SettingsUIShowGroupName(kAboutGroup)]
 
-    // Declare the keyboard action (CO InputManager action).
+    // keyboard action (CO InputManager)
     [SettingsUIKeyboardAction(Mod.kTogglePanelActionName, ActionType.Button, usages: new[] { "Game" })]
     public sealed class Setting : ModSetting
     {
