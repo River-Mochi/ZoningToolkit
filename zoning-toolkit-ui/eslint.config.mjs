@@ -6,7 +6,6 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 import reactPlugin from "eslint-plugin-react";
 
-// Use typescript-eslint's flat-config helper to compose configs.
 export default tseslint.config(
     // Base JS recommended rules
     eslintJs.configs.recommended,
@@ -53,6 +52,9 @@ export default tseslint.config(
             // React rules that don't make sense for CS2 UI
             "react/react-in-jsx-scope": "off",
             "react/prop-types": "off",
+
+            // Disable error for using "any"
+            "@typescript-eslint/no-explicit-any": "off", // Allow "any" type without error
         },
     },
 );

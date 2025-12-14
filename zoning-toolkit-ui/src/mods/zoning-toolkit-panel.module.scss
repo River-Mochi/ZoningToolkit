@@ -1,18 +1,33 @@
 // src/mods/zoning-toolkit-panel.module.scss
 // Floating, draggable Zone Tools panel styling.
 
-.panel {
-    // Must remove panel from local positioning (to avoid affecting other mod buttons)
+.dragBounds {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    // Don't block clicks to other UI.
+    pointer-events: none;
+}
+
+.dragItem {
     position: absolute;
     top: 50rem;
+    left: 0;
+    // Panel itself must still receive mouse.
+    pointer-events: auto;
+    // Optional: reduce accidental text selection when dragging.
+    user-select: none;
+}
 
-    // Let vanilla style most of it, but keep the panel from growing too wide.
-    // max-width: 380rem;
+.panel {
+    // Let vanilla handle visuals.
+    position: absolute;
+    z-index: 1000; /* Ensure this is higher than vanilla's z-index */
 }
 
 .panelToolModeRow {
     display: flex;
     flex-direction: row;
-    // Ensure some minimum spacing between left/right columns
     padding-left: 14rem;
 }

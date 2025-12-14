@@ -45,6 +45,9 @@
 	<!-- Let the CS2 toolchain provide TargetFramework and resolve refs -->
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.props" />
 	<Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" />
+	<ItemGroup>
+	  <Content Include="zoning-toolkit-ui\.vscode\launch.json" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<!-- Ensure ALL game/Unity/Colossal refs are not copied to output -->
@@ -105,7 +108,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="zoning-toolkit-ui\src\components\" />
+	  <Folder Include="zoning-toolkit-ui\src\VanillaComponents\" />
 	</ItemGroup>
 
 	<!-- Run npm ci AFTER C# build, only when needed:
