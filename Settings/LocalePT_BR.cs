@@ -60,7 +60,7 @@ namespace ZoningToolkit
                 { "ZoneTools.UI.Tooltip.ModeDefault", "Padrão (ambos)" },
                 { "ZoneTools.UI.Tooltip.ModeLeft", "Esquerda" },
                 { "ZoneTools.UI.Tooltip.ModeRight", "Direita" },
-                { "ZoneTools.UI.Tooltip.ModeNone", "Nenhum" },
+                { "ZoneTools.UI.Tooltip.ModeNone", "Nenhum" }
 
             };
 

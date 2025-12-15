@@ -1,18 +1,17 @@
-// Utils/EntityUtils.cs Debug inspect helper
+// Utils/EntityUtils.cs
+// Debug inspect helper (DEBUG-only).
 // Dump component types on an entity (or entities in a query) to console/log.
 
 namespace ZoningToolkit.Utils
 {
-    using System;
     using System.Runtime.CompilerServices;
-    using Game.Common;
     using Game.UI;
-    using Unity.Collections;
     using Unity.Entities;
     using ZoningToolkit.Systems;
 
     public static class EntityUtils
     {
+#if DEBUG
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void listEntityComponents(this ZoneToolSystemCore system, Entity entity)
         {
@@ -55,5 +54,22 @@ namespace ZoningToolkit.Utils
 
             entities.Dispose();
         }
+#else
+        // Release builds: no-op to avoid accidental allocations/log spam.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void listEntityComponents(this ZoneToolSystemCore system, Entity entity)
+        {
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void listEntityComponents(this UISystemBase uiSystemBase, Entity entity)
+        {
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void listEntityComponentsInQuery(this ZoneToolSystemCore system, EntityQuery entityQuery)
+        {
+        }
+#endif
     }
 }

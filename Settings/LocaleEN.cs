@@ -50,10 +50,10 @@ namespace ZoningToolkit
 
                 { m_Setting.GetOptionGroupLocaleID(Setting.kUiGroup), "UI" },
 
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)), "Auto-open panel for road tools" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)), "When opening Road tools, also open Zone Tools" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)),
-                  "When enabled, the Zone Tools panel opens automatically when you select a zonable road tool.\n" +
-                  "Turn off to open it manually."
+                  "When enabled, the Zone Tools panel opens automatically when you open a zonable road tool.\n" +
+                  "Disable to open ZT panel manually."
                 },
 
                 // -----------------------------------------------------------------
