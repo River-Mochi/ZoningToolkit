@@ -47,6 +47,26 @@ namespace ZoningToolkit
 
                 // Keybinding name (Options → Keybindings)
                 { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Toggle panel" },
+
+                { m_Setting.GetOptionGroupLocaleID(Setting.kUiGroup), "UI" },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)), "Auto-open panel for road tools" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)),
+                  "When enabled, the Zone Tools panel opens automatically when you select a zonable road tool.\n" +
+                  "Turn off to open it manually."
+                },
+
+                // -----------------------------------------------------------------
+                // UI strings (React panel)
+                // -----------------------------------------------------------------
+                { "ZoneTools.UI.UpdateRoad", "Update Road" },
+
+                { "ZoneTools.UI.Tooltip.UpdateRoad",
+                  "Toggle update tool (for existing roads). Roads with zoned buildings are skipped." },
+                { "ZoneTools.UI.Tooltip.ModeDefault", "Default (both)" },
+                { "ZoneTools.UI.Tooltip.ModeLeft", "Left" },
+                { "ZoneTools.UI.Tooltip.ModeRight", "Right" },
+                { "ZoneTools.UI.Tooltip.ModeNone", "None" }
             };
 
             return d;

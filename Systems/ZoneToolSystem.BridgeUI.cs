@@ -88,7 +88,7 @@ namespace ZoningToolkit.Systems
                 "zoning_mode_update",
                 zoningModeString =>
                 {
-                    if (Enum.TryParse<ZoningMode>(zoningModeString, out var mode))
+                    if (Enum.TryParse<ZoningMode>(zoningModeString, out ZoningMode mode))
                     {
                         Mod.Debug($"{Mod.ModTag} Zone Tools UI: zoning mode updated to {mode}");
                         m_UIState.zoningMode = mode;
@@ -171,11 +171,13 @@ namespace ZoningToolkit.Systems
                 }
 
                 // Optional convenience: auto-open the panel when entering a zonable road tool.
-                if (!m_UIState.visible)
+                bool autoOpen = Mod.Settings?.AutoOpenPanelForRoadTools ?? true;
+                if (autoOpen && !m_UIState.visible)
                 {
-                    Mod.Debug($"{Mod.ModTag} OnToolChanged: auto-opening Zone Tools panel for road tool.");
+                    Mod.Debug($"{Mod.ModTag} OnToolChanged: auto-open ZT panel for new road tool.");
                     m_UIState.visible = true;
                 }
+
             }
         }
 

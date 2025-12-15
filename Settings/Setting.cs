@@ -1,5 +1,5 @@
 // Settings/Setting.cs
-// Options UI for Zone Tools – About info + keyboard shortcut for the Zone Tools panel.
+// Options UI for Zone Tools – About info + keyboard shortcut + UI behaviour toggle.
 
 namespace ZoningToolkit
 {
@@ -10,9 +10,8 @@ namespace ZoningToolkit
 
     [FileLocation("ModsSettings/ZoneTools/ZoneTools")]
     [SettingsUITabOrder(kAboutTab)]
-    [SettingsUIGroupOrder(kAboutGroup, kBindingsGroup)]
+    [SettingsUIGroupOrder(kAboutGroup, kUiGroup, kBindingsGroup)]
     [SettingsUIShowGroupName(kAboutGroup)]
-
     // keyboard action (CO InputManager)
     [SettingsUIKeyboardAction(Mod.kTogglePanelActionName, ActionType.Button, usages: new[] { "Game" })]
     public sealed class Setting : ModSetting
@@ -22,6 +21,7 @@ namespace ZoningToolkit
 
         // Groups
         public const string kAboutGroup = "About";
+        public const string kUiGroup = "UI";
         public const string kBindingsGroup = "Key bindings";
 
         public Setting(IMod mod)
@@ -31,7 +31,8 @@ namespace ZoningToolkit
 
         public override void SetDefaults()
         {
-            // No saved options yet.
+            // Keep existing behaviour by default (panel auto-opens when selecting zonable road tools).
+            AutoOpenPanelForRoadTools = true;
         }
 
         // ----- ABOUT TAB ------------------------------------------------------
@@ -41,6 +42,14 @@ namespace ZoningToolkit
 
         [SettingsUISection(kAboutTab, kAboutGroup)]
         public string ModVersion => Mod.ModVersion;
+
+        // ----- UI ------------------------------------------------------------
+
+        [SettingsUISection(kAboutTab, kUiGroup)]
+        public bool AutoOpenPanelForRoadTools
+        {
+            get; set;
+        }
 
         // ----- KEYBINDINGS ----------------------------------------------------
         // Default: Shift+Z; user can rebind in Options → Mods and Keybindings.

@@ -47,6 +47,20 @@ namespace ZoningToolkit
 
                 // Keybinding name (Options → Keybindings)
                 { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – 切换面板" },
+
+                // -----------------------------------------------------------------
+                // UI strings (React panel)
+                // -----------------------------------------------------------------
+                { "ZoneTools.UI.UpdateRoad", "更新道路" },
+
+                {
+                    "ZoneTools.UI.Tooltip.UpdateRoad",
+                    "切换更新工具（用于现有道路）。带有已分区建筑的道路将被跳过。"
+                },
+                { "ZoneTools.UI.Tooltip.ModeDefault", "默认（两侧）" },
+                { "ZoneTools.UI.Tooltip.ModeLeft", "左侧" },
+                { "ZoneTools.UI.Tooltip.ModeRight", "右侧" },
+                { "ZoneTools.UI.Tooltip.ModeNone", "无" },
             };
 
             return d;

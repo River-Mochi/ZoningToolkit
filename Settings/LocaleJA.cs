@@ -47,6 +47,21 @@ namespace ZoningToolkit
 
                 // Keybinding name (Options → Keybindings)
                 { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – パネルの表示/非表示" },
+
+                // -----------------------------------------------------------------
+                // UI strings (React panel)
+                // -----------------------------------------------------------------
+                { "ZoneTools.UI.UpdateRoad", "道路を更新" },
+
+                {
+                    "ZoneTools.UI.Tooltip.UpdateRoad",
+                    "更新ツールを切り替え（既存の道路用）。ゾーン指定された建物がある道路はスキップされます。"
+                },
+                { "ZoneTools.UI.Tooltip.ModeDefault", "デフォルト（両側）" },
+                { "ZoneTools.UI.Tooltip.ModeLeft", "左" },
+                { "ZoneTools.UI.Tooltip.ModeRight", "右" },
+                { "ZoneTools.UI.Tooltip.ModeNone", "なし" }
+
             };
 
             return d;

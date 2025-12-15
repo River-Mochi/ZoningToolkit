@@ -47,6 +47,21 @@ namespace ZoningToolkit
 
                 // Keybinding name (Options → Keybindings)
                 { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – 패널 토글" },
+
+                // -----------------------------------------------------------------
+                // UI strings (React panel)
+                // -----------------------------------------------------------------
+                { "ZoneTools.UI.UpdateRoad", "도로 업데이트" },
+
+                {
+                    "ZoneTools.UI.Tooltip.UpdateRoad",
+                    "업데이트 도구를 전환합니다(기존 도로용). 구역 지정된 건물이 있는 도로는 건너뜁니다."
+                },
+                { "ZoneTools.UI.Tooltip.ModeDefault", "기본(양쪽)" },
+                { "ZoneTools.UI.Tooltip.ModeLeft", "왼쪽" },
+                { "ZoneTools.UI.Tooltip.ModeRight", "오른쪽" },
+                { "ZoneTools.UI.Tooltip.ModeNone", "없음" }
+
             };
 
             return d;

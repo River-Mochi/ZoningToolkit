@@ -47,6 +47,21 @@ namespace ZoningToolkit
 
                 // Keybinding name (Options → Keybindings)
                 { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Alternar painel" },
+
+                // -----------------------------------------------------------------
+                // UI strings (React panel)
+                // -----------------------------------------------------------------
+                { "ZoneTools.UI.UpdateRoad", "Atualizar via" },
+
+                {
+                    "ZoneTools.UI.Tooltip.UpdateRoad",
+                    "Ativar/desativar a ferramenta de atualização (para vias existentes). Vias com prédios zoneados são ignoradas."
+                },
+                { "ZoneTools.UI.Tooltip.ModeDefault", "Padrão (ambos)" },
+                { "ZoneTools.UI.Tooltip.ModeLeft", "Esquerda" },
+                { "ZoneTools.UI.Tooltip.ModeRight", "Direita" },
+                { "ZoneTools.UI.Tooltip.ModeNone", "Nenhum" },
+
             };
 
             return d;

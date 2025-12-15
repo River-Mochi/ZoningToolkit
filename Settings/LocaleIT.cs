@@ -47,6 +47,21 @@ namespace ZoningToolkit
 
                 // Keybinding name (Options → Keybindings)
                 { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Mostra/nascondi pannello" },
+
+                // -----------------------------------------------------------------
+                // UI strings (React panel)
+                // -----------------------------------------------------------------
+                { "ZoneTools.UI.UpdateRoad", "Aggiorna strada" },
+
+                {
+                    "ZoneTools.UI.Tooltip.UpdateRoad",
+                    "Attiva/disattiva lo strumento di aggiornamento (per strade esistenti). Le strade con edifici zonizzati vengono ignorate."
+                },
+                { "ZoneTools.UI.Tooltip.ModeDefault", "Predefinito (entrambi)" },
+                { "ZoneTools.UI.Tooltip.ModeLeft", "Sinistra" },
+                { "ZoneTools.UI.Tooltip.ModeRight", "Destra" },
+                { "ZoneTools.UI.Tooltip.ModeNone", "Nessuno" }
+
             };
 
             return d;

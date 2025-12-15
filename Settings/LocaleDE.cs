@@ -47,6 +47,21 @@ namespace ZoningToolkit
 
                 // Keybinding name (Options → Keybindings)
                 { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Panel umschalten" },
+
+                // -----------------------------------------------------------------
+                // UI strings (React panel)
+                // -----------------------------------------------------------------
+                { "ZoneTools.UI.UpdateRoad", "Straße aktualisieren" },
+
+                {
+                    "ZoneTools.UI.Tooltip.UpdateRoad",
+                    "Aktualisierungswerkzeug umschalten (für bestehende Straßen). Straßen mit zonierten Gebäuden werden übersprungen."
+                },
+                { "ZoneTools.UI.Tooltip.ModeDefault", "Standard (beide Seiten)" },
+                { "ZoneTools.UI.Tooltip.ModeLeft", "Links" },
+                { "ZoneTools.UI.Tooltip.ModeRight", "Rechts" },
+                { "ZoneTools.UI.Tooltip.ModeNone", "Keine" }
+
             };
 
             return d;
