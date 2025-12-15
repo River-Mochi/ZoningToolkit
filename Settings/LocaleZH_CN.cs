@@ -21,46 +21,67 @@ namespace ZoningToolkit
         {
             var d = new Dictionary<string, string>
             {
-                // Options title (single source of truth from Mod.cs)
                 { m_Setting.GetSettingsLocaleID(), Mod.ModName + " " + Mod.ModTag },
 
                 // Tabs
-                { m_Setting.GetOptionTabLocaleID(Setting.kAboutTab), "关于" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kActionsTab), "操作" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kAboutTab),   "关于" },
 
                 // Groups
-                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),    "关于" },
-                { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup), "键绑定" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kActionsGroup),     "操作" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup),    "按键绑定" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),       "" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutLinksGroup),  "链接" },
 
                 // About fields
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "模组名称" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModName)),     "此模组的显示名称。" },
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModVersion)), "版本" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "当前 Zone Tools 版本。" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Zone Tools 当前版本。" },
 
-                // Keybinding option (Options → Mods)
+                // About links
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.OpenParadox)), "Paradox Mods" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.OpenParadox)),  "打开作者的 Paradox Mods 页面。" },
+
+                // Actions toggles
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)), "打开道路工具时自动打开 Zone Tools" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)),
+                    "启用后，打开可分区的道路工具时会自动打开 Zone Tools 面板。\n" +
+                    "关闭则需要手动打开。"
+                },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectOccupiedCells)), "保护已占用格（有建筑）" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectOccupiedCells)),
+                    "启用后，Zone Tools 不会修改已有建筑的格子的分区深度/范围。"
+                },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectZonedCells)), "保护已分区但为空的格" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectZonedCells)),
+                    "启用后，Zone Tools 不会修改已涂分区的格子（即使为空）。"
+                },
+
+                // Keybinding option
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "切换面板" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.TogglePanelBinding)),
-                    "用于显示或隐藏 Zone Tools 面板的快捷键（与点击左上角菜单图标相同）。"
+                    "显示/隐藏 Zone Tools 面板的快捷键（与左上角图标相同）。"
                 },
 
-                // Keybinding name (Options → Keybindings)
+                // Keybinding name
                 { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – 切换面板" },
 
-                // -----------------------------------------------------------------
-                // UI strings (React panel)
-                // -----------------------------------------------------------------
+                // React panel
                 { "ZoneTools.UI.UpdateRoad", "更新道路" },
+                { "ZoneTools.UI.Tooltip.UpdateRoad", "切换更新工具（用于现有道路）。" },
 
-                {
-                    "ZoneTools.UI.Tooltip.UpdateRoad",
-                    "切换更新工具（用于现有道路）。带有已分区建筑的道路将被跳过。"
-                },
-                { "ZoneTools.UI.Tooltip.ModeDefault", "默认（两侧）" },
-                { "ZoneTools.UI.Tooltip.ModeLeft", "左侧" },
-                { "ZoneTools.UI.Tooltip.ModeRight", "右侧" },
-                { "ZoneTools.UI.Tooltip.ModeNone", "无" }
+                { "ZoneTools.UI.Tooltip.ModeDefault", "两侧（默认）" },
+                { "ZoneTools.UI.Tooltip.ModeLeft",    "左侧" },
+                { "ZoneTools.UI.Tooltip.ModeRight",   "右侧" },
+                { "ZoneTools.UI.Tooltip.ModeNone",    "无" }
             };
 
             return d;
@@ -68,7 +89,6 @@ namespace ZoningToolkit
 
         public void Unload()
         {
-            // Nothing to clean up; CS2 manages locale life cycle.
         }
     }
 }

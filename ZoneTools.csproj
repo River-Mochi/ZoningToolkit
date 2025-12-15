@@ -105,6 +105,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="Localization\" />
 	  <Folder Include="zoning-toolkit-ui\src\components\" />
 	</ItemGroup>
 

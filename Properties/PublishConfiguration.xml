@@ -4,34 +4,36 @@
 	<!--Name of the mod to display to players-->
 	<DisplayName Value="Zone Tools" />
 	<!--Short description of the mod-->
-	<ShortDescription Value="Change zoning on any side of a road." />
+	<ShortDescription Value="Change zoning on any side of a road; use for placing new roads or updating existing roads." />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<LongDescription>### Zone Tools Redux
 
-Control of the zoning along any zonable road. Zoning can be enabled on both sides of roads, on left or right only, or no sides at all.
-This enables finer control of where buildings will spawn, as well as placing roads close together without overlapping/conflicting zones.
-
-## Usage
-
-The tool can be used both for placing new roads and updating existing roads.
+Change zoning along either new roads or update existing roads. Enable zoning on both sides of roads, left or right only, or no sides at all. 
+This allows finer control of where buildings will spawn, as well as placing roads close together without overlapping/conflicting zones.
 
 ### New roads
-* Open zoning panel by clicking on the button (top-left) or hotkey (default shift+Z)
-* Select default (both), left, right, none.
-* Draw a new road with (note: zoning side depends on the direction the road is drawn)
 
-### Update Existing Roads (UER):     
-* Open the same zoning panel (top-left button or hotkey)
-* Enable the "update" button, recycle icon (select again to turn off)
-* Select the side of the road you want (default, left, right, none)
-* Click on roads to update their zoning (supports click-and-drag for updating multiple roads)
-* Left Mouse applies the zoning change. New: right mouse Cycles through the 4 zone choices so you do not need to click icon again
-* You can change the side you want by clicking the icon or use Right mouse click to cycle.
+- Open zone panel by clicking on the button (top-left) or hotkey (default shift+Z)
+- Pre-select both, left, right, none.
+- Draw a new road (note: side depends on road draw direction).
 
-## Notes
+### Update Existing Roads (UER):
 
-Please note that if you have buildings on a road, for safety, the zoning will skip them so they are not destroyed!
-This is to prevent the buildings from being despawned when the zoning is removed.
+- Open the zoning panel (top-left button or hotkey)
+- Enable the "Update" button, (recycle icon). Click again to turn off.
+- Select the side of the road you want (both, left, right, none buttons)
+- Click on roads to update their zoning (supports click-and-drag for updating many roads)
+- Left mouse applies the zone change. Select different icons to change.
+- New: right mouse click will also cycle the 4-zone options.
+
+Power Trick: if you have existing roads and do not want a new road intersecting it to alter zoning, pick "none" then draw the new road. 
+Your existing road should keep zoning facing the same original direction you set.
+
+## Options
+
+- ✅ Auto-open Zone Tools when road tools opens.
+- ✅ Protect occupied cells (buildings) 
+- ✅ Protect zoned-but-empty cells
 
 ### 11 Languages
 
@@ -45,7 +47,7 @@ This is to prevent the buildings from being despawned when the zoning is removed
 - thanks to original zeeshanabid94 for original ZoningToolKit (retired)
 - thanks to yenyang for technical support
 
-	</LongDescription>
+</LongDescription>
 	<!--Thumbnail-->
 <Thumbnail Value="Properties/10Thumbnail.jpg" />
 <!--Screenshot, can be set multiple times-->
@@ -64,9 +66,10 @@ This is to prevent the buildings from being despawned when the zoning is removed
 	<!--Changelog for new version. Single line or multi line. Supports minimal markdown subset-->
 <ChangeLog Value="" />
 <ChangeLog>
-- Option to disable auto-zone panel opening on Road tool selection
-- Option to disable protection against removing zones with existing buildings
-- Option to disable
+- Option: auto-open Zone Tools panel when new Road tool is also selected.
+- Option: protect occupied cells (buildings)
+- Option: protect zoned-but-empty cells
+
 </ChangeLog>
 <ExternalLink Type="discord" Url="https://discord.gg/HTav7ARPs2" />
 <ExternalLink Type="github" Url="https://github.com/River-Mochi/ZoneTools" />

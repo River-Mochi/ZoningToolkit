@@ -25,12 +25,14 @@ namespace ZoningToolkit
                 { m_Setting.GetSettingsLocaleID(), Mod.ModName + " " + Mod.ModTag },
 
                 // Tabs
-                { m_Setting.GetOptionTabLocaleID(Setting.kAboutTab), "About" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kActionsTab), "Actions" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kAboutTab),   "About"   },
 
                 // Groups
-                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),    "About"        },
-                { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup), "Key bindings" },
-                { m_Setting.GetOptionGroupLocaleID(Setting.kUiGroup),       "UI"           },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kActionsGroup),     "Actions"      },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup),    "Key bindings" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),       "About"        },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutLinksGroup),  "Links"        },
 
                 // About fields
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "Mod name" },
@@ -38,6 +40,30 @@ namespace ZoningToolkit
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModVersion)), "Version" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Current Zone Tools version." },
+
+                // About links
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.OpenParadox)), "Paradox Mods" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.OpenParadox)),  "Open the author's Paradox Mods page." },
+
+                // Actions toggles
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)), "Auto-open Zone Tools with road tools." },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)),
+                    "When enabled, the Zone Tools panel opens automatically when you open a zonable road tool.\n" +
+                    "Disable to open the panel manually."
+                },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectOccupiedCells)), "Protect occupied cells (has buildings)" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectOccupiedCells)),
+                    "When enabled, Zone Tools won’t change zoning depth/area on cells that already have a building."
+                },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectZonedCells)), "Protect zoned-but-empty cells" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectZonedCells)),
+                    "When enabled, Zone Tools won’t change zoning depth/area on cells that are already zoned (even if empty)."
+                },
 
                 // Keybinding option (Options → Mods)
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "Toggle panel" },
@@ -49,37 +75,18 @@ namespace ZoningToolkit
                 // Keybinding name (Options → Keybindings)
                 { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Toggle panel" },
 
-                // UI options
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)), "Auto-open Zone Tools with road tools." },
-                {
-                    m_Setting.GetOptionDescLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)),
-                    "When enabled, the Zone Tools panel opens automatically when you open a zonable road tool.\n" +
-                    "Disable to open ZT panel manually."
-                },
-
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectOccupiedCells)), "Protect occupied cells (has buildings)" },
-                {
-                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectOccupiedCells)),
-                    "When enabled, Zone Tools will not change zoning depth/area on cells that already have a building."
-                },
-
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectZonedCells)), "Protect zoned-but-empty cells" },
-                {
-                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectZonedCells)),
-                    "When enabled, Zone Tools will not change zoning depth/area on cells that are already zoned (even if empty)."
-                },
-
                 // -----------------------------------------------------------------
                 // UI strings (React panel)
                 // -----------------------------------------------------------------
                 { "ZoneTools.UI.UpdateRoad", "Update Road" },
 
                 { "ZoneTools.UI.Tooltip.UpdateRoad",
-                  "Toggle update tool (for existing roads). Roads with zoned buildings are skipped." },
-                { "ZoneTools.UI.Tooltip.ModeDefault", "Default (both)" },
-                { "ZoneTools.UI.Tooltip.ModeLeft", "Left" },
-                { "ZoneTools.UI.Tooltip.ModeRight", "Right" },
-                { "ZoneTools.UI.Tooltip.ModeNone", "None" }
+                  "Toggle update tool (for existing roads)." },
+
+                { "ZoneTools.UI.Tooltip.ModeDefault", "Both (default)" },
+                { "ZoneTools.UI.Tooltip.ModeLeft",    "Left"          },
+                { "ZoneTools.UI.Tooltip.ModeRight",   "Right"         },
+                { "ZoneTools.UI.Tooltip.ModeNone",    "None"          }
             };
 
             return d;

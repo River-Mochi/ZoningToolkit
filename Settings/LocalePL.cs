@@ -21,15 +21,17 @@ namespace ZoningToolkit
         {
             var d = new Dictionary<string, string>
             {
-                // Options title (single source of truth from Mod.cs)
                 { m_Setting.GetSettingsLocaleID(), Mod.ModName + " " + Mod.ModTag },
 
                 // Tabs
-                { m_Setting.GetOptionTabLocaleID(Setting.kAboutTab), "Informacje" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kActionsTab), "Akcje" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kAboutTab),   "Informacje" },
 
                 // Groups
-                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),    "Informacje" },
-                { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup), "Skróty klawiszowe" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kActionsGroup),     "Akcje" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup),    "Skróty klawiszowe" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),       "" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutLinksGroup),  "Linki" },
 
                 // About fields
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "Nazwa moda" },
@@ -38,30 +40,48 @@ namespace ZoningToolkit
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModVersion)), "Wersja" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Aktualna wersja Zone Tools." },
 
-                // Keybinding option (Options → Mods)
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "Pokaż/ukryj panel" },
+                // About links
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.OpenParadox)), "Paradox Mods" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.OpenParadox)),  "Otwórz stronę autora na Paradox Mods." },
+
+                // Actions toggles
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)), "Automatycznie otwieraj Zone Tools przy narzędziach dróg." },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)),
+                    "Gdy włączone, panel Zone Tools otwiera się automatycznie po wybraniu narzędzia drogi z zonowaniem.\n" +
+                    "Wyłącz, aby otwierać panel ręcznie."
+                },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectOccupiedCells)), "Chroń zajęte komórki (budynki)" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectOccupiedCells)),
+                    "Gdy włączone, Zone Tools nie zmienia głębokości/obszaru strefy na komórkach, które mają już budynek."
+                },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectZonedCells)), "Chroń już wyznaczone (puste) komórki" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectZonedCells)),
+                    "Gdy włączone, Zone Tools nie zmienia głębokości/obszaru strefy na komórkach już oznaczonych strefą (nawet jeśli puste)."
+                },
+
+                // Keybinding option
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "Przełącz panel" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.TogglePanelBinding)),
-                    "Skrót klawiszowy do pokazania lub ukrycia panelu Zone Tools (tak samo jak kliknięcie ikony menu w lewym górnym rogu)."
+                    "Skrót klawiszowy do pokazania/ukrycia panelu Zone Tools (jak ikona w lewym górnym rogu)."
                 },
 
-                // Keybinding name (Options → Keybindings)
-                { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Pokaż/ukryj panel" },
+                // Keybinding name
+                { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Przełącz panel" },
 
-                // -----------------------------------------------------------------
-                // UI strings (React panel)
-                // -----------------------------------------------------------------
+                // React panel
                 { "ZoneTools.UI.UpdateRoad", "Aktualizuj drogę" },
+                { "ZoneTools.UI.Tooltip.UpdateRoad", "Przełącz narzędzie aktualizacji (istniejące drogi)." },
 
-                {
-                    "ZoneTools.UI.Tooltip.UpdateRoad",
-                    "Włącz/wyłącz narzędzie aktualizacji (dla istniejących dróg). Drogi z budynkami na strefach są pomijane."
-                },
-                { "ZoneTools.UI.Tooltip.ModeDefault", "Domyślnie (obie strony)" },
-                { "ZoneTools.UI.Tooltip.ModeLeft", "Lewa" },
-                { "ZoneTools.UI.Tooltip.ModeRight", "Prawa" },
-                { "ZoneTools.UI.Tooltip.ModeNone", "Brak" }
-
+                { "ZoneTools.UI.Tooltip.ModeDefault", "Obie strony (domyślnie)" },
+                { "ZoneTools.UI.Tooltip.ModeLeft",    "Lewa" },
+                { "ZoneTools.UI.Tooltip.ModeRight",   "Prawa" },
+                { "ZoneTools.UI.Tooltip.ModeNone",    "Brak" }
             };
 
             return d;
@@ -69,7 +89,6 @@ namespace ZoningToolkit
 
         public void Unload()
         {
-            // Nothing to clean up; CS2 manages locale life cycle.
         }
     }
 }

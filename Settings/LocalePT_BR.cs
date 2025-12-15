@@ -21,15 +21,17 @@ namespace ZoningToolkit
         {
             var d = new Dictionary<string, string>
             {
-                // Options title (single source of truth from Mod.cs)
                 { m_Setting.GetSettingsLocaleID(), Mod.ModName + " " + Mod.ModTag },
 
                 // Tabs
-                { m_Setting.GetOptionTabLocaleID(Setting.kAboutTab), "Sobre" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kActionsTab), "Ações" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kAboutTab),   "Sobre" },
 
                 // Groups
-                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),    "Sobre" },
-                { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup), "Atalhos do teclado" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kActionsGroup),     "Ações" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup),    "Atalhos" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),       "" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kAboutLinksGroup),  "Links" },
 
                 // About fields
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "Nome do mod" },
@@ -38,30 +40,48 @@ namespace ZoningToolkit
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModVersion)), "Versão" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Versão atual do Zone Tools." },
 
-                // Keybinding option (Options → Mods)
+                // About links
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.OpenParadox)), "Paradox Mods" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.OpenParadox)),  "Abrir a página do autor no Paradox Mods." },
+
+                // Actions toggles
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)), "Abrir Zone Tools automaticamente com ferramentas de estrada." },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)),
+                    "Quando ativado, o painel do Zone Tools abre automaticamente ao selecionar uma estrada com zoneamento.\n" +
+                    "Desative para abrir o painel manualmente."
+                },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectOccupiedCells)), "Proteger células ocupadas (com prédios)" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectOccupiedCells)),
+                    "Quando ativado, o Zone Tools não muda a profundidade/área de zoneamento em células que já têm um prédio."
+                },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectZonedCells)), "Proteger células já zoneadas (vazias)" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectZonedCells)),
+                    "Quando ativado, o Zone Tools não muda a profundidade/área de zoneamento em células já zoneadas (mesmo vazias)."
+                },
+
+                // Keybinding option
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "Alternar painel" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.TogglePanelBinding)),
-                    "Atalho do teclado para mostrar ou ocultar o painel do Zone Tools (igual a clicar no ícone do menu no canto superior esquerdo)."
+                    "Atalho para mostrar/ocultar o painel do Zone Tools (igual ao ícone no canto superior esquerdo)."
                 },
 
-                // Keybinding name (Options → Keybindings)
+                // Keybinding name
                 { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Alternar painel" },
 
-                // -----------------------------------------------------------------
-                // UI strings (React panel)
-                // -----------------------------------------------------------------
-                { "ZoneTools.UI.UpdateRoad", "Atualizar via" },
+                // React panel
+                { "ZoneTools.UI.UpdateRoad", "Atualizar estrada" },
+                { "ZoneTools.UI.Tooltip.UpdateRoad", "Alternar ferramenta de atualização (estradas existentes)." },
 
-                {
-                    "ZoneTools.UI.Tooltip.UpdateRoad",
-                    "Ativar/desativar a ferramenta de atualização (para vias existentes). Vias com prédios zoneados são ignoradas."
-                },
-                { "ZoneTools.UI.Tooltip.ModeDefault", "Padrão (ambos)" },
-                { "ZoneTools.UI.Tooltip.ModeLeft", "Esquerda" },
-                { "ZoneTools.UI.Tooltip.ModeRight", "Direita" },
-                { "ZoneTools.UI.Tooltip.ModeNone", "Nenhum" }
-
+                { "ZoneTools.UI.Tooltip.ModeDefault", "Ambos (padrão)" },
+                { "ZoneTools.UI.Tooltip.ModeLeft",    "Esquerda" },
+                { "ZoneTools.UI.Tooltip.ModeRight",   "Direita" },
+                { "ZoneTools.UI.Tooltip.ModeNone",    "Nenhum" }
             };
 
             return d;
@@ -69,7 +89,6 @@ namespace ZoningToolkit
 
         public void Unload()
         {
-            // Nothing to clean up; CS2 manages locale life cycle.
         }
     }
 }

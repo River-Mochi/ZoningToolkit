@@ -1,10 +1,33 @@
-# CS2: Zone Tools
+﻿# Zone Tools
 
-Mod for Cities Skylines 2 that provides control of the zoning along a city's roads. Zoning can be enabled on both sides of roads, on any one side, or no sides at all.
-This enables finer control of where buildings will spawn, as well as placing roads close together without overlapping/conflicting zones.
+A Cities: Skylines II mod that lets you control zoning on roads: **both sides**, **left**, **right**, or **none**.  
+Works for **new roads** and for **updating existing roads**.
 
-## Potential Improvements
-- Zoning tool remains active when you switch to a prefab that doesn't support zoning (ie. roundabouts, advanced road services), but should be turned off when switching prefabs.
-- Zoning tool opens road panel when selected, but does not close when unselected
+## How to use
 
-### Credits
+- Open the Zone Tools panel (top-left button or **Shift+Z** by default)
+- Pick a zoning mode: **Both / Left / Right / None**
+
+### New roads
+- Select a mode, then draw a road (note: side depends on road draw direction)
+
+### Update existing roads (UER)
+- Open the panel → enable **Update Road**
+- Click roads to apply (supports click-and-drag)
+- **Right-click** cycles the 4 zoning modes
+
+## Options UI Settings
+
+- Auto-open Zone Tools when road tools opens.
+- Protect occupied cells (buildings)
+- Protect zoned-but-empty cells
+
+## Languages
+
+English, French, German, Spanish, Italian, Japanese, Korean, Polish, Portuguese (Brazil), Simplified Chinese, Traditional Chinese.
+
+## Credits
+
+- River-mochi author and maintainer
+- Original ZoningToolKit by zeeshanabid94 (retired)
+- Thanks to yenyang for technical support
