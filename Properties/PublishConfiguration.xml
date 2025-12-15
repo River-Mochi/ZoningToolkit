@@ -69,7 +69,6 @@ Your existing road should keep zoning facing the same original direction you set
 - Option: auto-open Zone Tools panel when new Road tool is also selected.
 - Option: protect occupied cells (buildings)
 - Option: protect zoned-but-empty cells
-
 </ChangeLog>
 <ExternalLink Type="discord" Url="https://discord.gg/HTav7ARPs2" />
 <ExternalLink Type="github" Url="https://github.com/River-Mochi/ZoneTools" />
