@@ -49,7 +49,7 @@ Your existing road should keep zoning facing the same original direction you set
 
 </LongDescription>
 	<!--Thumbnail-->
-<Thumbnail Value="Properties/10Thumbnail.jpg" />
+<Thumbnail Value="Properties/ZoneTools-3D.jpg" />
 <!--Screenshot, can be set multiple times-->
 <Screenshot Value="Properties/ss10-panel.jpg" />
 <Screenshot Value="Properties/ss20-roads.jpg" />
