@@ -1,5 +1,8 @@
 // Systems/ZoneToolSystem.Core.cs
 // Core zoning application system (new + updated blocks).
+// Applies optional protection rules from Settings:
+// - ProtectOccupiedCells (default ON)
+// - ProtectZonedCells (default OFF)
 
 namespace ZoningToolkit.Systems
 {
@@ -116,6 +119,10 @@ namespace ZoningToolkit.Systems
 
             EntityCommandBuffer ecb = m_ModificationBarrier4B.CreateCommandBuffer();
 
+            // Read settings ONCE per update (cheap + consistent for all jobs this frame).
+            bool protectOccupiedCells = Mod.Settings?.ProtectOccupiedCells ?? true;
+            bool protectZonedCells = Mod.Settings?.ProtectZonedCells ?? false;
+
             NativeParallelHashMap<float2, Entity> deletedByStart =
                 new NativeParallelHashMap<float2, Entity>(32, Allocator.TempJob);
             NativeParallelHashMap<float2, Entity> deletedByEnd =
@@ -142,6 +149,9 @@ namespace ZoningToolkit.Systems
                 JobHandle job = new UpdateZoneData
                 {
                     zoningMode = zoningMode,
+                    protectOccupiedCells = protectOccupiedCells,
+                    protectZonedCells = protectZonedCells,
+
                     entityTypeHandle = m_EntityTypeHandle,
                     blockComponentTypeHandle = m_BlockTypeHandle,
                     validAreaComponentTypeHandle = m_ValidAreaTypeHandle,
@@ -165,6 +175,9 @@ namespace ZoningToolkit.Systems
                 JobHandle job = new UpdateZoningInfoJob
                 {
                     zoningMode = zoningMode,
+                    protectOccupiedCells = protectOccupiedCells,
+                    protectZonedCells = protectZonedCells,
+
                     entityTypeHandle = m_EntityTypeHandle,
                     blockComponentTypeHandle = m_BlockTypeHandle,
                     validAreaComponentTypeHandle = m_ValidAreaTypeHandle,
@@ -207,6 +220,9 @@ namespace ZoningToolkit.Systems
         private struct UpdateZoningInfoJob : IJobChunk
         {
             [ReadOnly] public ZoningMode zoningMode;
+            [ReadOnly] public bool protectOccupiedCells;
+            [ReadOnly] public bool protectZonedCells;
+
             [ReadOnly] public EntityTypeHandle entityTypeHandle;
             public ComponentTypeHandle<Block> blockComponentTypeHandle;
             public ComponentTypeHandle<ValidArea> validAreaComponentTypeHandle;
@@ -259,7 +275,11 @@ namespace ZoningToolkit.Systems
                     float dot = BlockUtils.blockCurveDotProduct(block, curve);
                     ZoningInfo zi = zoningInfoComponentLookup[owner.m_Owner];
 
-                    if (!BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea))
+                    bool blocked =
+                        (protectOccupiedCells && BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea)) ||
+                        (protectZonedCells && BlockUtils.isAnyCellZoned(ref cells, ref block, ref validArea));
+
+                    if (!blocked)
                     {
                         BlockUtils.editBlockSizes(dot, zi, validArea, block, entity, entityCommandBuffer);
                         entityCommandBuffer.AddComponent(owner.m_Owner, zi);
@@ -273,6 +293,9 @@ namespace ZoningToolkit.Systems
         private struct UpdateZoneData : IJobChunk
         {
             [ReadOnly] public ZoningMode zoningMode;
+            [ReadOnly] public bool protectOccupiedCells;
+            [ReadOnly] public bool protectZonedCells;
+
             [ReadOnly] public EntityTypeHandle entityTypeHandle;
             public ComponentTypeHandle<Block> blockComponentTypeHandle;
             public ComponentTypeHandle<ValidArea> validAreaComponentTypeHandle;
@@ -371,7 +394,13 @@ namespace ZoningToolkit.Systems
                     ValidArea validArea = validAreas[i];
 
                     float dot = BlockUtils.blockCurveDotProduct(block, curve);
-                    if (BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea))
+
+                    if (protectOccupiedCells && BlockUtils.isAnyCellOccupied(ref cells, ref block, ref validArea))
+                    {
+                        continue;
+                    }
+
+                    if (protectZonedCells && BlockUtils.isAnyCellZoned(ref cells, ref block, ref validArea))
                     {
                         continue;
                     }

@@ -4,7 +4,7 @@
 namespace ZoningToolkit.Systems
 {
     using Game;
-    using Game.Input;   // ProxyAction
+    using Game.Input;       // ProxyAction
     using Unity.Entities;   // GameSystemBase
 
     /// <summary>
@@ -38,10 +38,11 @@ namespace ZoningToolkit.Systems
                 return;
             }
 
-            // This is the CO keybinding event: fires once on the frame the key is pressed.
+            // Fires once on the frame the keybinding action is pressed.
             if (togglePanelAction.WasPressedThisFrame())
             {
-                Mod.s_Log.Info("[ZT] ZoneToolSystemKeybind: togglePanelAction.WasPressedThisFrame() → toggling panel.");
+                // This used to be Info() and could be noisy. Keep it in debug logs only.
+                Mod.Debug("[ZT] ZoneToolSystemKeybind: togglePanelAction.WasPressedThisFrame() -> toggling panel.");
                 m_UISystem.TogglePanelFromHotkey();
             }
         }

@@ -1,5 +1,5 @@
 // Settings/Setting.cs
-// Options UI for Zone Tools – About info + keyboard shortcut + UI behaviour toggle.
+// Options UI for Zone Tools – About info + keyboard shortcut + UI behaviour + protection toggles.
 
 namespace ZoningToolkit
 {
@@ -12,7 +12,6 @@ namespace ZoningToolkit
     [SettingsUITabOrder(kAboutTab)]
     [SettingsUIGroupOrder(kAboutGroup, kUiGroup, kBindingsGroup)]
     [SettingsUIShowGroupName(kAboutGroup)]
-    // keyboard action (CO InputManager)
     [SettingsUIKeyboardAction(Mod.kTogglePanelActionName, ActionType.Button, usages: new[] { "Game" })]
     public sealed class Setting : ModSetting
     {
@@ -31,8 +30,14 @@ namespace ZoningToolkit
 
         public override void SetDefaults()
         {
-            // Keep existing behaviour by default (panel auto-opens when selecting zonable road tools).
             AutoOpenPanelForRoadTools = true;
+
+            // Protection defaults:
+            ProtectOccupiedCells = true;
+            ProtectZonedCells = false;
+
+            // Ensure binding has a concrete value when resetting.
+            TogglePanelBinding = new ProxyBinding { };
         }
 
         // ----- ABOUT TAB ------------------------------------------------------
@@ -45,11 +50,24 @@ namespace ZoningToolkit
 
         // ----- UI ------------------------------------------------------------
 
+        // IMPORTANT: property initializers are what make “first install” defaults show up.
         [SettingsUISection(kAboutTab, kUiGroup)]
         public bool AutoOpenPanelForRoadTools
         {
             get; set;
-        }
+        } = true;
+
+        [SettingsUISection(kAboutTab, kUiGroup)]
+        public bool ProtectOccupiedCells
+        {
+            get; set;
+        } = true;
+
+        [SettingsUISection(kAboutTab, kUiGroup)]
+        public bool ProtectZonedCells
+        {
+            get; set;
+        } = false;
 
         // ----- KEYBINDINGS ----------------------------------------------------
         // Default: Shift+Z; user can rebind in Options → Mods and Keybindings.
@@ -59,6 +77,6 @@ namespace ZoningToolkit
         public ProxyBinding TogglePanelBinding
         {
             get; set;
-        }
+        } = new ProxyBinding { };
     }
 }

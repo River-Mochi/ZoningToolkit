@@ -1,6 +1,6 @@
 // Utils/EntityUtils.cs
-// Debug inspect helper (DEBUG-only).
-// Dump component types on an entity (or entities in a query) to console/log.
+// Debug inspect helper: dump component types on an entity (or entities in a query) to log.
+// In Release builds these methods become no-ops (to avoid log spam/perf impact).
 
 namespace ZoningToolkit.Utils
 {
@@ -11,64 +11,76 @@ namespace ZoningToolkit.Utils
 
     public static class EntityUtils
     {
-#if DEBUG
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void listEntityComponents(this ZoneToolSystemCore system, Entity entity)
         {
-            var types = system.EntityManager.GetComponentTypes(entity);
-            foreach (var type in types)
-            {
-                Console.WriteLine($"Entity has component {type.GetManagedType()}");
-            }
+#if DEBUG
+            DumpEntityComponents(system.EntityManager, entity);
+#else
+            _ = system;
+            _ = entity;
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void listEntityComponents(this UISystemBase uiSystemBase, Entity entity)
         {
-            var types = uiSystemBase.EntityManager.GetComponentTypes(entity);
-            foreach (var type in types)
-            {
-                Console.WriteLine($"Entity has component {type.GetManagedType()}");
-            }
+#if DEBUG
+            DumpEntityComponents(uiSystemBase.EntityManager, entity);
+#else
+            _ = uiSystemBase;
+            _ = entity;
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void listEntityComponentsInQuery(this ZoneToolSystemCore system, EntityQuery entityQuery)
         {
+#if DEBUG
             NativeArray<Entity> entities = entityQuery.ToEntityArray(Allocator.Temp);
-
-            for (int i = 0; i < entities.Length; i++)
+            try
             {
-                Entity entity = entities[i];
-
-                Mod.s_Log.Info("****** Listing entity components ******");
-                system.listEntityComponents(entity);
-
-                Mod.s_Log.Info("***** Printing owner info ******");
-                if (system.ownerComponentLookup.HasComponent(entity))
+                for (int i = 0; i < entities.Length; i++)
                 {
-                    Owner owner = system.ownerComponentLookup[entity];
-                    system.listEntityComponents(owner.m_Owner);
+                    Entity entity = entities[i];
+
+                    Mod.s_Log.Debug("****** Listing entity components ******");
+                    system.listEntityComponents(entity);
+
+                    Mod.s_Log.Debug("***** Printing owner info ******");
+                    if (system.ownerComponentLookup.HasComponent(entity))
+                    {
+                        Owner owner = system.ownerComponentLookup[entity];
+                        system.listEntityComponents(owner.m_Owner);
+                    }
                 }
             }
-
-            entities.Dispose();
-        }
+            finally
+            {
+                entities.Dispose();
+            }
 #else
-        // Release builds: no-op to avoid accidental allocations/log spam.
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void listEntityComponents(this ZoneToolSystemCore system, Entity entity)
-        {
+            _ = system;
+            _ = entityQuery;
+#endif
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void listEntityComponents(this UISystemBase uiSystemBase, Entity entity)
+#if DEBUG
+        private static void DumpEntityComponents(EntityManager em, Entity entity)
         {
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void listEntityComponentsInQuery(this ZoneToolSystemCore system, EntityQuery entityQuery)
-        {
+            NativeArray<ComponentType> types = em.GetComponentTypes(entity, Allocator.Temp);
+            try
+            {
+                for (int i = 0; i < types.Length; i++)
+                {
+                    ComponentType type = types[i];
+                    Mod.s_Log.Debug($"Entity has component {type.GetManagedType()}");
+                }
+            }
+            finally
+            {
+                types.Dispose();
+            }
         }
 #endif
     }

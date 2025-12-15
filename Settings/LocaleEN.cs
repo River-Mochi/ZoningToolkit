@@ -30,6 +30,7 @@ namespace ZoningToolkit
                 // Groups
                 { m_Setting.GetOptionGroupLocaleID(Setting.kAboutGroup),    "About"        },
                 { m_Setting.GetOptionGroupLocaleID(Setting.kBindingsGroup), "Key bindings" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kUiGroup),       "UI"           },
 
                 // About fields
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "Mod name" },
@@ -48,12 +49,24 @@ namespace ZoningToolkit
                 // Keybinding name (Options → Keybindings)
                 { m_Setting.GetBindingKeyLocaleID(Mod.kTogglePanelActionName), "Zone Tools – Toggle panel" },
 
-                { m_Setting.GetOptionGroupLocaleID(Setting.kUiGroup), "UI" },
+                // UI options
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)), "Auto-open Zone Tools with road tools." },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)),
+                    "When enabled, the Zone Tools panel opens automatically when you open a zonable road tool.\n" +
+                    "Disable to open ZT panel manually."
+                },
 
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)), "When opening Road tools, also open Zone Tools" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)),
-                  "When enabled, the Zone Tools panel opens automatically when you open a zonable road tool.\n" +
-                  "Disable to open ZT panel manually."
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectOccupiedCells)), "Protect occupied cells (has buildings)" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectOccupiedCells)),
+                    "When enabled, Zone Tools will not change zoning depth/area on cells that already have a building."
+                },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectZonedCells)), "Protect zoned-but-empty cells" },
+                {
+                    m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectZonedCells)),
+                    "When enabled, Zone Tools will not change zoning depth/area on cells that are already zoned (even if empty)."
                 },
 
                 // -----------------------------------------------------------------

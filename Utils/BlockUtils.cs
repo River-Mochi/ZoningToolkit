@@ -1,6 +1,7 @@
 // Utils/BlockUtils.cs
 // turns zoning area on/off by setting validArea.m_Area.w and block.m_Size.y to 0 or 6 depending on mode + side.
-// Checks CellFlags.Occupied in the area and returns true if any cell is occupied. Protects occupied areas from zone changes.
+// Checks CellFlags.Occupied and/or existing zoning (painted zone) based on callers.
+// Protects occupied/zoned areas from zone changes when enabled via settings.
 
 namespace ZoningToolkit.Utils
 {
@@ -99,7 +100,9 @@ namespace ZoningToolkit.Utils
 #endif
 
             if (validArea.m_Area.y * validArea.m_Area.w == 0)
+            {
                 return false;
+            }
 
             for (int z = validArea.m_Area.z; z < validArea.m_Area.w; z++)
             {
@@ -107,11 +110,43 @@ namespace ZoningToolkit.Utils
                 {
                     int index = z * block.m_Size.x + x;
                     if (index < 0 || index >= cells.Length)
+                    {
                         continue;
+                    }
 
                     Cell cell = cells[index];
                     if ((cell.m_State & CellFlags.Occupied) != 0)
+                    {
                         return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public static bool isAnyCellZoned(ref DynamicBuffer<Cell> cells, ref Block block, ref ValidArea validArea)
+        {
+            if (validArea.m_Area.y * validArea.m_Area.w == 0)
+            {
+                return false;
+            }
+
+            for (int z = validArea.m_Area.z; z < validArea.m_Area.w; z++)
+            {
+                for (int x = validArea.m_Area.x; x < validArea.m_Area.y; x++)
+                {
+                    int index = z * block.m_Size.x + x;
+                    if (index < 0 || index >= cells.Length)
+                    {
+                        continue;
+                    }
+
+                    Cell cell = cells[index];
+                    if (cell.m_Zone.m_Index != ZoneType.None.m_Index)
+                    {
+                        return true;
+                    }
                 }
             }
 
