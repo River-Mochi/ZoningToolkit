@@ -49,27 +49,30 @@ namespace ZoningToolkit
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)), "Auto-open Zone Tools with road tools." },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.AutoOpenPanelForRoadTools)),
-                    "When enabled, the Zone Tools panel opens automatically when you open a zonable road tool.\n" +
-                    "Disable to open the panel manually."
+                    "**[ ✓ ] enabled**, the **Zone Tools panel** automatically opens/closes when you open/close a zonable road tool.\n\n" +
+                    "**[   ] disabled**, panel is opened/closed manually."
                 },
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectOccupiedCells)), "Protect occupied cells (has buildings)" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectOccupiedCells)),
-                    "When enabled, Zone Tools won’t change zoning depth/area on cells that already have a building."
+                    "**[ ✓ ] enabled**, Zone Tools does not change zoning depth/area on cells that already have a building.\n" +
+                    "**[   ] disabled**, buildings could be condemned when changing the zoning under them."
+
                 },
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectZonedCells)), "Protect zoned-but-empty cells" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectZonedCells)),
-                    "When enabled, Zone Tools won’t change zoning depth/area on cells that are already zoned (even if empty)."
+                    "**[ ✓ ] enabled**, Zone Tools does not change zoning depth/area on cells that are already zoned (even if empty).\n" +
+                    "**[   ] disabled**, already zoned cells (painted RCIO) could be overwritten when using the Zone Tools."
                 },
 
                 // Keybinding option (Options → Mods)
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "Toggle panel" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.TogglePanelBinding)),
-                    "Keyboard shortcut to show or hide the Zone Tools panel (same as clicking the top-left menu icon)."
+                    "**Keyboard** shortcut to show or hide the Zone Tools panel (same as clicking the top-left menu icon)."
                 },
 
                 // Keybinding name (Options → Keybindings)

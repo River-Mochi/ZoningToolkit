@@ -8,8 +8,8 @@
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<LongDescription>### Zone Tools Redux
 
-Change zoning along new roads or update existing roads. Enable zoning road sides for both/left/right/none. 
-This allows finer control of where buildings will spawn, as well as placing roads close together without overlapping/conflicting zones.
+- Change zoning along new roads or update existing roads. Enable zoning road sides for both/left/right/none. 
+- Allows finer control of where buildings will spawn, as well as placing roads close together without overlapping/conflicting zones.
 
 ### New roads
 
@@ -31,7 +31,7 @@ Your existing road should keep zoning facing the same original direction you set
 
 ## Options
 
-- ✅ Auto-open Zone Tools when road tools opens.
+- ✅ Auto open/close Zone Tools when road tools opens.
 - ✅ Protect occupied cells (buildings) 
 - ✅ Protect zoned-but-empty cells
 
@@ -53,7 +53,7 @@ Your existing road should keep zoning facing the same original direction you set
 <!--Screenshot, can be set multiple times-->
 <Screenshot Value="Properties/10-panel.jpg" />
 <Screenshot Value="Properties/30-OptionsEN.jpg" />
-<Screenshot Value="Properties/20-roads.jpg" />
+<Screenshot Value="Properties/35-roads.jpg" />
 <Screenshot Value="Properties/40-OptionsCN.jpg" />
 <Screenshot Value="Properties/50-OptionsFR.jpg" />
 <!--Tag, can be set multiple times-->
@@ -61,7 +61,7 @@ Your existing road should keep zoning facing the same original direction you set
 <!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/zone-tool-redux.1888663/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.1.1" />
+	<ModVersion Value="1.1.2" />
 <!--Recommended version of the base game to use the mod-->
 <GameVersion Value="1.5.*" />
 	<!--Dependency for the mod, can be set multiple times-->
@@ -70,6 +70,7 @@ Your existing road should keep zoning facing the same original direction you set
 <ChangeLog Value="" />
 <ChangeLog>
 - update images
+- Auto open toggle now also auto closes when road tool is closed.
 </ChangeLog>
 <ExternalLink Type="discord" Url="https://discord.gg/HTav7ARPs2" />
 <ExternalLink Type="github" Url="https://github.com/River-Mochi/ZoneTools" />

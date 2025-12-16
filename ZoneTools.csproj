@@ -8,7 +8,7 @@
 		<PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
 
 		<!-- Versioning: single source of truth -->
-		<Version>1.1.1</Version>
+		<Version>1.1.2</Version>
 		<AssemblyVersion>$(Version).0</AssemblyVersion>
 		<FileVersion>$(Version).0</FileVersion>
 
