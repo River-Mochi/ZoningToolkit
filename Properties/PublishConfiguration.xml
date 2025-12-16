@@ -49,16 +49,19 @@ Your existing road should keep zoning facing the same original direction you set
 
 </LongDescription>
 	<!--Thumbnail-->
-<Thumbnail Value="Properties/ZoneTools-3D.jpg" />
+<Thumbnail Value="Properties/ZoneTools-Thumbnail.jpg" />
 <!--Screenshot, can be set multiple times-->
-<Screenshot Value="Properties/ss10-panel.jpg" />
-<Screenshot Value="Properties/ss20-roads.jpg" />
+<Screenshot Value="Properties/10-panel.jpg" />
+<Screenshot Value="Properties/30-OptionsEN.jpg" />
+<Screenshot Value="Properties/20-roads.jpg" />
+<Screenshot Value="Properties/40-OptionsCN.jpg" />
+<Screenshot Value="Properties/50-OptionsFR.jpg" />
 <!--Tag, can be set multiple times-->
 <Tag Value="Code Mod" />
 <!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/zone-tool-redux.1888663/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.1.0" />
+	<ModVersion Value="1.1.1" />
 <!--Recommended version of the base game to use the mod-->
 <GameVersion Value="1.5.*" />
 	<!--Dependency for the mod, can be set multiple times-->
@@ -66,9 +69,7 @@ Your existing road should keep zoning facing the same original direction you set
 	<!--Changelog for new version. Single line or multi line. Supports minimal markdown subset-->
 <ChangeLog Value="" />
 <ChangeLog>
-- Option: auto-open Zone Tools panel when new Road tool is also selected.
-- Option: protect occupied cells (buildings)
-- Option: protect zoned-but-empty cells
+- update images
 </ChangeLog>
 <ExternalLink Type="discord" Url="https://discord.gg/HTav7ARPs2" />
 <ExternalLink Type="github" Url="https://github.com/River-Mochi/ZoneTools" />
