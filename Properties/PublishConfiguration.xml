@@ -14,7 +14,7 @@
 ### New roads
 
 - Open zone panel by clicking the button (top-left) or hotkey (default shift+Z)
-- Pre-select both, left, right, or none.
+- Pre-select both, left, right, or none; moveable panel.
 - Draw a new road (note: vanilla has side depend on road draw direction).
 
 ### Update Existing Roads (UER):
