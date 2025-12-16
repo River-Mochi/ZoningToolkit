@@ -13,20 +13,20 @@
 
 ### New roads
 
-- Open zone panel by clicking on the button (top-left) or hotkey (default shift+Z)
-- Pre-select both, left, right, none.
-- Draw a new road (note: side depends on road draw direction).
+- Open zone panel by clicking the button (top-left) or hotkey (default shift+Z)
+- Pre-select both, left, right, or none.
+- Draw a new road (note: vanilla has side depend on road draw direction).
 
 ### Update Existing Roads (UER):
 
-- Open the zoning panel (top-left button or hotkey)
-- Enable the "Update" button, (recycle icon). Click again to turn off.
-- Select the side of the road you want (both, left, right, none buttons)
-- Click on roads to update their zoning (supports click-and-drag for updating many roads)
+- Open zoning panel (top-left button or hotkey)
+- Enable the **Update** button (recycle icon). Click again to turn off.
+- Select the side you want (both, left, right, none buttons).
+- Left click on roads to update zoning (supports click-and-drag to update many roads).
 - Left mouse applies the zone change. Select different icons to change.
 - New: right mouse click will also cycle the 4-zone options.
 
-Power Trick: if you have existing roads and do not want a new road intersecting it to alter zoning, pick "none" then draw the new road. 
+Power Trick: if you have existing roads and do not want a new road intersecting it to alter zoning, pick **None**, then draw the new road. 
 Your existing road should keep zoning facing the same original direction you set.
 
 ## Options
@@ -59,14 +59,14 @@ Your existing road should keep zoning facing the same original direction you set
 <!--Tag, can be set multiple times-->
 <Tag Value="Code Mod" />
 <!--Link to the forum post where the mod can be discussed-->
-	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/zone-tool-redux.1888663/" />
-	<!--Version of the mod-->
-	<ModVersion Value="1.1.2" />
+<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/zone-tool-redux.1888663/" />
+<!--Version of the mod-->
+<ModVersion Value="1.1.2" />
 <!--Recommended version of the base game to use the mod-->
 <GameVersion Value="1.5.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
-	<!--Changelog for new version. Single line or multi line. Supports minimal markdown subset-->
+<!--Changelog for new version. Single line or multi line. Supports minimal markdown subset-->
 <ChangeLog Value="" />
 <ChangeLog>
 - update images
