@@ -18,9 +18,9 @@ Works for **new roads** and for **updating existing roads**.
 
 ## Options UI Settings
 
-- Auto-open Zone Tools when road tools opens.
-- Protect occupied cells (buildings)
-- Protect zoned-but-empty cells
+- ✅ Auto-open Zone Tools when road tools opens.
+- ✅ Protect occupied cells (buildings)
+- ✅ Protect zoned-but-empty cells
 
 ## Languages
 

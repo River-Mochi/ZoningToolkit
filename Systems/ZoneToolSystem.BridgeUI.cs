@@ -1,5 +1,6 @@
 // Systems/ZoneToolSystem.BridgeUI.cs
 // Bridges Zone Tools ECS state with the in-game UI (panel, menu button, and tool enable/disable).
+// Auto open/close the Zone Tools panel when selecting/leaving zonable road tools (optional via settings).
 
 namespace ZoningToolkit.Systems
 {
@@ -32,6 +33,10 @@ namespace ZoningToolkit.Systems
 
         private UIState m_UIState;
 
+        // If true, the panel was opened automatically due to a zonable road tool selection,
+        // then auto-close it when leaving the zonable road tool.
+        private bool m_AutoOpenedForRoadTools;
+
         public override GameMode gameMode => GameMode.Game;
 
         protected override void OnCreate()
@@ -50,6 +55,8 @@ namespace ZoningToolkit.Systems
                 applyToNewRoads = false,
                 toolEnabled = false
             };
+
+            m_AutoOpenedForRoadTools = false;
 
             // React to tool / prefab changes.
             m_ToolSystem.EventPrefabChanged =
@@ -121,6 +128,10 @@ namespace ZoningToolkit.Systems
         {
             bool newVisible = !m_UIState.visible;
             m_UIState.visible = newVisible;
+
+            // Manual user action overrides the "auto-opened" latch.
+            m_AutoOpenedForRoadTools = false;
+
             Mod.Debug($"{Mod.ModTag} TogglePanelFromHotkey: m_UIState.visible = {m_UIState.visible}");
 
             // If the panel is being hidden, also disable the update tool so input/overlays stop.
@@ -131,7 +142,6 @@ namespace ZoningToolkit.Systems
                 m_UIState.toolEnabled = false;
             }
         }
-
 
         // Used by the zoning tool to read / change the active mode.
         internal ZoningMode CurrentZoningMode => m_UIState.zoningMode;
@@ -158,39 +168,39 @@ namespace ZoningToolkit.Systems
 
         private void OnToolChanged(ToolBaseSystem tool)
         {
-            // When a zoneable road-building tool is selected, disable the existing-road helper
-            // to avoid mixing "build new roads" and "update existing roads".
-            if (tool is NetToolSystem netTool &&
-                netTool.GetPrefab() is RoadPrefab roadPrefab &&
-                roadPrefab.m_ZoneBlock != null)
+            // Always disable the existing-road helper when a zonable road building tool is selected.
+            bool isZonableRoadTool = IsZonableRoadTool(tool);
+
+            if (isZonableRoadTool)
             {
                 if (m_Tool.toolEnabled)
                 {
                     Mod.Debug($"{Mod.ModTag} OnToolChanged: Net road tool selected -> disabling Zone Tool helper.");
                     m_Tool.DisableTool();
                 }
-
-                // Optional convenience: auto-open the panel when entering a zonable road tool.
-                bool autoOpen = Mod.Settings?.AutoOpenPanelForRoadTools ?? true;
-                if (autoOpen && !m_UIState.visible)
-                {
-                    Mod.Debug($"{Mod.ModTag} OnToolChanged: auto-open ZT panel for new road tool.");
-                    m_UIState.visible = true;
-                }
-
             }
+
+            HandleAutoPanelForRoadTools(isZonableRoadTool, "tool change");
         }
 
         private void OnPrefabChanged(PrefabBase prefab)
         {
-            // Panel visibility is not driven by prefab changes in this phase.
+            // Prefab changes matter mainly while NetTool is active (switching small road <-> highway, etc.).
+            if (m_ToolSystem.activeTool is not NetToolSystem)
+            {
+                return;
+            }
+
+            bool isZonableRoadPrefab =
+                prefab is RoadPrefab roadPrefab &&
+                roadPrefab.m_ZoneBlock != null;
+
+            HandleAutoPanelForRoadTools(isZonableRoadPrefab, "prefab change");
         }
 
         protected override void OnUpdate()
         {
             base.OnUpdate();
-
-            // Systems/ZoneToolSystem.BridgeUI.cs
 
             // If the panel is not visible (or photo mode is on), the update tool must not remain active.
             if ((!m_UIState.visible || m_PhotoMode.Enabled) && m_Tool.toolEnabled)
@@ -198,6 +208,18 @@ namespace ZoningToolkit.Systems
                 Mod.Debug($"{Mod.ModTag} OnUpdate: panel hidden/photomode -> disabling update tool.");
                 ToggleTool(false);
                 m_UIState.toolEnabled = false;
+            }
+
+            // Safety: if we auto-opened due to a road tool, but we're no longer in a zonable road tool,
+            // auto-close even if an event was missed.
+            bool autoOpen = Mod.Settings?.AutoOpenPanelForRoadTools ?? true;
+            if (autoOpen && m_AutoOpenedForRoadTools)
+            {
+                bool stillZonable = IsZonableRoadTool(m_ToolSystem.activeTool);
+                if (!stillZonable)
+                {
+                    HandleAutoPanelForRoadTools(false, "update check");
+                }
             }
 
             // Sync UI -> tool/system.
@@ -217,6 +239,61 @@ namespace ZoningToolkit.Systems
             if (m_UIState.toolEnabled != m_Tool.toolEnabled)
             {
                 m_UIState.toolEnabled = m_Tool.toolEnabled;
+            }
+        }
+
+        // ----- Helpers --------------------------------------------------------
+
+        private static bool IsZonableRoadTool(ToolBaseSystem tool)
+        {
+            if (tool is not NetToolSystem netTool)
+            {
+                return false;
+            }
+
+            if (netTool.GetPrefab() is not RoadPrefab roadPrefab)
+            {
+                return false;
+            }
+
+            return roadPrefab.m_ZoneBlock != null;
+        }
+
+        private void HandleAutoPanelForRoadTools(bool isZonableRoadTool, string reason)
+        {
+            bool autoOpen = Mod.Settings?.AutoOpenPanelForRoadTools ?? true;
+            if (!autoOpen)
+            {
+                // If user disabled the option, don't keep an auto-open latch around.
+                m_AutoOpenedForRoadTools = false;
+                return;
+            }
+
+            if (isZonableRoadTool)
+            {
+                // Auto-open only if it was previously closed.
+                if (!m_UIState.visible)
+                {
+                    Mod.Debug($"{Mod.ModTag} Auto-open ZT panel ({reason}).");
+                    m_UIState.visible = true;
+                    m_AutoOpenedForRoadTools = true;
+                }
+            }
+            else
+            {
+                // Auto-close only if we were the ones who auto-opened it.
+                if (m_AutoOpenedForRoadTools && m_UIState.visible)
+                {
+                    Mod.Debug($"{Mod.ModTag} Auto-close ZT panel ({reason}).");
+                    m_UIState.visible = false;
+                    m_AutoOpenedForRoadTools = false;
+
+                    if (m_Tool.toolEnabled)
+                    {
+                        ToggleTool(false);
+                        m_UIState.toolEnabled = false;
+                    }
+                }
             }
         }
     }
