@@ -68,7 +68,6 @@ namespace ZoningToolkit
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "切換面板" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.TogglePanelBinding)),
-                    // CHANGE (native suggestion): adds the verb, reads more natural
                     "顯示/隱藏 Zone Tools 面板的快捷鍵（與點選左上角圖示相同）。"
                 },
 

@@ -58,7 +58,6 @@ namespace ZoningToolkit
                     "启用后，Zone Tools 不会修改已有建筑的格子的分区深度/范围。"
                 },
 
-                // CHANGE (native suggestion): shorter + closer to actual behavior
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectZonedCells)), "不改变已涂分区格子" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectZonedCells)),
@@ -69,7 +68,6 @@ namespace ZoningToolkit
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "切换面板" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.TogglePanelBinding)),
-                    // CHANGE (native suggestion): clearer that it equals clicking the icon
                     "显示/隐藏 Zone Tools 面板的快捷键（相当于点击左上角图标）。"
                 },
 
