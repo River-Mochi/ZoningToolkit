@@ -32,13 +32,13 @@ namespace ZoningToolkit
         // Once-only banner flag
         private static bool s_BannerLogged;
 
-        // CO-style logger
+        // CO logger
         public static readonly ILog s_Log = LogManager.GetLogger(ModId);
 
         /// <summary>
         /// Debug logging flag for verbose logs (UI events, tool chatter, etc.).
         /// In DEBUG builds this defaults to true; in RELEASE builds it defaults to false.
-        /// Can flip this at runtime if code added to expose it via settings toggle.
+        /// Can flip at runtime if code added to expose it via settings toggle.
         /// </summary>
         public static bool DebugLoggingEnabled
         {
@@ -70,7 +70,7 @@ namespace ZoningToolkit
             get; private set;
         }
 
-        // The ProxyAction for Shift+Z (rebindable). Used by ZoneToolSystemKeybind.
+        // ProxyAction for Shift+Z (rebindable). Used by ZoneToolSystemKeybind.
         public static ProxyAction? TogglePanelAction
         {
             get; private set;

@@ -37,8 +37,8 @@ namespace ZoningToolkit
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "模组名称" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModName)),     "此模组的显示名称。" },
 
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModVersion)), "版本" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Zone Tools 当前版本。" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.VersionText)), "版本" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.VersionText)),  "Zone Tools 当前版本。" },
 
                 // About links
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.OpenParadox)), "Paradox Mods" },
@@ -58,7 +58,8 @@ namespace ZoningToolkit
                     "启用后，Zone Tools 不会修改已有建筑的格子的分区深度/范围。"
                 },
 
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectZonedCells)), "保护已分区但为空的格" },
+                // CHANGE (native suggestion): shorter + closer to actual behavior
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ProtectZonedCells)), "不改变已涂分区格子" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.ProtectZonedCells)),
                     "启用后，Zone Tools 不会修改已涂分区的格子（即使为空）。"
@@ -68,7 +69,8 @@ namespace ZoningToolkit
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.TogglePanelBinding)), "切换面板" },
                 {
                     m_Setting.GetOptionDescLocaleID(nameof(Setting.TogglePanelBinding)),
-                    "显示/隐藏 Zone Tools 面板的快捷键（与左上角图标相同）。"
+                    // CHANGE (native suggestion): clearer that it equals clicking the icon
+                    "显示/隐藏 Zone Tools 面板的快捷键（相当于点击左上角图标）。"
                 },
 
                 // Keybinding name

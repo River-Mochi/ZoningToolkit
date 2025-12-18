@@ -37,8 +37,8 @@ namespace ZoningToolkit
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "모드 이름" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModName)),     "이 모드의 표시 이름입니다." },
 
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModVersion)), "버전" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Zone Tools의 현재 버전입니다." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.VersionText)), "버전" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.VersionText)),  "Zone Tools의 현재 버전입니다." },
 
                 // About links
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.OpenParadox)), "Paradox Mods" },

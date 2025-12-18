@@ -235,6 +235,7 @@ namespace ZoningToolkit.Systems
         private OnUpdateMemory m_OnUpdateMemory;
         private ZoneToolBridgeUI m_UISystem = null!;
 
+
         internal bool toolEnabled
         {
             get; private set;
