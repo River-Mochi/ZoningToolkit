@@ -1,26 +1,34 @@
-// Components/ZoningInfo.cs
-
-using System;
-using Colossal.Serialization.Entities;
-using Unity.Entities;
+// File: Components/ZoningInfo.cs
+// Purpose: Zone Tools per-road settings
+// Notes to future self:
+// - Do not reorder enum members.
+// - Do not change existing numeric values once released.
+// - New members can be appended with explicit numeric values.
+// - Serialized as uint enum value.
+// - Default(ZoningMode) == Left because Left == 0. Always set explicitly when creating. Vanilla default is both sides.
 
 namespace ZoningToolkit.Components
 {
+    using System;
+    using Colossal.Serialization.Entities;
+    using Unity.Entities;
+
     public enum ZoningMode : uint
     {
-        Left,
-        Right,
-        Default,
-        None
+        Left = 0,
+        Right = 1,
+        Default = 2,
+        None = 3
     }
 
     public struct ZoningInfo : IComponentData, IQueryTypeParameter, IEquatable<ZoningInfo>, ISerializable
     {
+        // Saved value used when applying block size edits.
         public ZoningMode zoningMode;
 
-        public bool Equals(ZoningInfo other) => zoningMode == other.zoningMode;
+        public readonly bool Equals(ZoningInfo other) => zoningMode == other.zoningMode;
 
-        public override int GetHashCode() => zoningMode.GetHashCode();
+        public override readonly int GetHashCode() => zoningMode.GetHashCode();
 
         public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
         {
@@ -34,6 +42,7 @@ namespace ZoningToolkit.Components
         }
     }
 
+    // Marker component: triggers update pass for existing blocks.
     public struct ZoningInfoUpdated : IComponentData, IQueryTypeParameter
     {
     }

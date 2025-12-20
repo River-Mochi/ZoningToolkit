@@ -1,13 +1,12 @@
-// Systems/ZoneToolSystem.ExistingRoads.cs
-// Update tool Existing Roads: hover, drag-select existing roads, and apply Zone Tools modes.
+// File: Systems/ZoneToolSystem.ExistingRoads.cs
+// Purpose: Update Existing Roads tool (hover + select + apply zoning mode to existing networks).
 
 namespace ZoningToolkit.Systems
 {
-    using System.Collections.Generic;
-    using System.Runtime.CompilerServices;
-    using Game.Areas;
+    using Colossal.Entities;
+    using Colossal.Serialization.Entities;
+    using Game;
     using Game.Common;
-    using Game.Input;
     using Game.Net;
     using Game.Prefabs;
     using Game.Tools;
@@ -18,311 +17,78 @@ namespace ZoningToolkit.Systems
     using ZoningToolkit.Components;
     using ZoningToolkit.Utils;
 
-    /// <summary>
-    /// Job: mark a road entity (and its edge endpoints) as highlighted + updated.
-    /// </summary>
-    public struct HighlightEntitiesJob : IJob
-    {
-        public EntityCommandBuffer CommandBuffer;
-        public Entity EntityToHighlight;
-        public ComponentLookup<Edge> EdgeLookup;
-
-        public void Execute()
-        {
-            CommandBuffer.AddComponent<Highlighted>(EntityToHighlight);
-            CommandBuffer.AddComponent<Updated>(EntityToHighlight);
-
-            if (EdgeLookup.HasComponent(EntityToHighlight))
-            {
-                Edge edge = EdgeLookup[EntityToHighlight];
-                CommandBuffer.AddComponent<Updated>(edge.m_Start);
-                CommandBuffer.AddComponent<Updated>(edge.m_End);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Job: remove highlight from a road entity (and update its endpoints).
-    /// </summary>
-    public struct UnHighlightEntitiesJob : IJob
-    {
-        public EntityCommandBuffer CommandBuffer;
-        public Entity EntityToUnhighlight;
-        public ComponentLookup<Edge> EdgeLookup;
-
-        public void Execute()
-        {
-            CommandBuffer.RemoveComponent<Highlighted>(EntityToUnhighlight);
-            CommandBuffer.AddComponent<Updated>(EntityToUnhighlight);
-
-            if (EdgeLookup.HasComponent(EntityToUnhighlight))
-            {
-                Edge edge = EdgeLookup[EntityToUnhighlight];
-                CommandBuffer.AddComponent<Updated>(edge.m_Start);
-                CommandBuffer.AddComponent<Updated>(edge.m_End);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Job: for older saves that don't have ZoningInfo, infer zoning from existing blocks.
-    /// (Currently unused, but kept for compatibility if needed later.)
-    /// </summary>
-    public struct BackwardsCompatibilityZoningInfo : IJob
-    {
-        public Entity BackwardsCompatibilityEntity;
-        public ComponentLookup<Curve> CurveLookup;
-        public ComponentLookup<ZoningInfo> ZoningInfoLookup;
-        public BufferLookup<SubBlock> SubBlockBufferLookup;
-        public ComponentLookup<Block> BlockLookup;
-        public EntityCommandBuffer CommandBuffer;
-
-        public void Execute()
-        {
-            if (ZoningInfoLookup.HasComponent(BackwardsCompatibilityEntity))
-            {
-                return;
-            }
-
-            if (!CurveLookup.HasComponent(BackwardsCompatibilityEntity))
-            {
-                return;
-            }
-
-            Curve curve = CurveLookup[BackwardsCompatibilityEntity];
-            bool leftBlock = false;
-            bool rightBlock = false;
-
-            if (SubBlockBufferLookup.HasBuffer(BackwardsCompatibilityEntity))
-            {
-                DynamicBuffer<SubBlock> subBlocks = SubBlockBufferLookup[BackwardsCompatibilityEntity];
-
-                foreach (SubBlock item in subBlocks)
-                {
-                    Block block = BlockLookup[item.m_SubBlock];
-                    float dot = BlockUtils.blockCurveDotProduct(block, curve);
-
-                    if (dot > 0f)
-                    {
-                        if (block.m_Size.y > 0)
-                        {
-                            leftBlock = true;
-                        }
-                    }
-                    else
-                    {
-                        if (block.m_Size.y > 0)
-                        {
-                            rightBlock = true;
-                        }
-                    }
-                }
-            }
-
-            ZoningMode mode;
-            if (leftBlock && rightBlock)
-            {
-                mode = ZoningMode.Default;
-            }
-            else if (rightBlock)
-            {
-                mode = ZoningMode.Right;
-            }
-            else if (leftBlock)
-            {
-                mode = ZoningMode.Left;
-            }
-            else
-            {
-                mode = ZoningMode.None;
-            }
-
-            CommandBuffer.AddComponent(
-                BackwardsCompatibilityEntity,
-                new ZoningInfo { zoningMode = mode });
-        }
-    }
-
-    /// <summary>
-    /// Job: apply a new ZoningInfo to all selected entities and mark blocks for update.
-    /// </summary>
-    public struct UpdateZoningInfo : IJob
-    {
-        public NativeHashSet<Entity> EntitySet;
-        public ComponentLookup<Curve> CurveLookup;
-        public ComponentLookup<ZoningInfo> ZoningInfoLookup;
-        public BufferLookup<SubBlock> SubBlockBufferLookup;
-        public ComponentLookup<Edge> EdgeLookup;
-        public EntityCommandBuffer CommandBuffer;
-        public ZoningInfo NewZoningInfo;
-
-        public void Execute()
-        {
-            NativeArray<Entity> entities = EntitySet.ToNativeArray(Allocator.TempJob);
-
-            foreach (Entity entity in entities)
-            {
-                if (CurveLookup.HasComponent(entity))
-                {
-                    // Apply zoning info to the road entity (set if present, add if missing).
-                    if (ZoningInfoLookup.HasComponent(entity))
-                    {
-                        CommandBuffer.SetComponent(entity, NewZoningInfo);
-                    }
-                    else
-                    {
-                        CommandBuffer.AddComponent(entity, NewZoningInfo);
-                    }
-
-                    // Mark all sub-blocks as needing re-zoning.
-                    if (SubBlockBufferLookup.HasBuffer(entity))
-                    {
-                        DynamicBuffer<SubBlock> subBlocks = SubBlockBufferLookup[entity];
-                        foreach (SubBlock sub in subBlocks)
-                        {
-                            CommandBuffer.AddComponent<ZoningInfoUpdated>(sub.m_SubBlock);
-                        }
-                    }
-                }
-
-                // Remove highlight and mark road as updated.
-                CommandBuffer.RemoveComponent<Highlighted>(entity);
-                CommandBuffer.AddComponent<Updated>(entity);
-
-                // Also mark edge endpoints as updated, if any.
-                if (EdgeLookup.HasComponent(entity))
-                {
-                    Edge edge = EdgeLookup[entity];
-                    CommandBuffer.AddComponent<Updated>(edge.m_Start);
-                    CommandBuffer.AddComponent<Updated>(edge.m_End);
-                }
-            }
-
-            entities.Dispose();
-            EntitySet.Clear();
-        }
-    }
-
-    /// <summary>
-    /// Main Zone Tools "update existing roads" tool.
-    /// </summary>
     internal sealed partial class ZoneToolSystemExistingRoads : ToolBaseSystem
     {
-        /// <summary>
-        /// Per-frame scratch data (jobs & ECB).
-        /// </summary>
-        private struct OnUpdateMemory
-        {
-            public JobHandle CurrentInputDeps;
-            public EntityCommandBuffer CommandBuffer;
-        }
-
-        /// <summary>
-        /// State kept while the tool is active.
-        /// </summary>
-        internal struct WorkingState
-        {
-            internal Entity lastRaycastEntity;
-            internal NativeHashSet<Entity> lastRaycastEntities;
-            internal ZoningMode zoningMode;
-        }
-
-        private ToolOutputBarrier m_ToolOutputBarrier = null!;
+        private ToolSystem m_ZTToolSystem = null!;
+        private DefaultToolSystem m_ZTDefaultToolSystem = null!;
         private NetToolSystem m_NetToolSystem = null!;
-        private ToolBaseSystem? m_PreviousToolSystem;
-        private ZoneToolSystemExistingRoadsStateMachine m_StateMachine = null!;
-        private TypeHandle m_TypeHandle;
-        private OnUpdateMemory m_OnUpdateMemory;
+        private ToolOutputBarrier m_ToolOutputBarrier = null!;
+        private PrefabSystem m_ZTPrefabSystem = null!;
         private ZoneToolBridgeUI m_UISystem = null!;
+
+        private NativeHashSet<Entity> m_Selected;
+        private int m_SelectedCount;
+        private Entity m_Hovered;
 
         internal bool toolEnabled
         {
             get; private set;
         }
 
-        internal WorkingState workingState;
+        private ToolBaseSystem? m_PreviousTool;
 
         public override string toolID => "Zone Tools Zoning Tool";
 
-        protected override void OnCreateForCompiler()
-        {
-            base.OnCreateForCompiler();
-            m_TypeHandle.__AssignHandles(ref CheckedStateRef);
-        }
-
         protected override void OnCreate()
         {
-            Mod.s_Log.Info($"Creating {toolID}.");
             base.OnCreate();
 
             Enabled = false;
 
-            m_ToolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
+            m_ZTToolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
+            m_ZTDefaultToolSystem = World.GetOrCreateSystemManaged<DefaultToolSystem>();
             m_NetToolSystem = World.GetOrCreateSystemManaged<NetToolSystem>();
-            m_ToolSystem = World.GetOrCreateSystemManaged<ToolSystem>();
+            m_ToolOutputBarrier = World.GetOrCreateSystemManaged<ToolOutputBarrier>();
+            m_ZTPrefabSystem = World.GetOrCreateSystemManaged<PrefabSystem>();
             m_UISystem = World.GetOrCreateSystemManaged<ZoneToolBridgeUI>();
+
+            m_Selected = new NativeHashSet<Entity>(128, Allocator.Persistent);
+            m_SelectedCount = 0;
+            m_Hovered = Entity.Null;
 
             toolEnabled = false;
 
-            workingState.lastRaycastEntity = Entity.Null;
-            workingState.lastRaycastEntities = default;
-            workingState.zoningMode = ZoningMode.Default;
+            EnsureSafePrefabForUI();
+        }
 
-            // Simple click / drag state machine using the vanilla Apply action (LMB by default).
-            m_StateMachine = new ZoneToolSystemExistingRoadsStateMachine(
-                new Dictionary<(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next), StateCallback>
-                {
-                    { (ZoneToolSystemExistingRoadsState.Default,   ZoneToolSystemExistingRoadsState.Selected),  EntityHighlighted },
-                    { (ZoneToolSystemExistingRoadsState.Default,   ZoneToolSystemExistingRoadsState.Default),   HoverUpdate      },
-                    { (ZoneToolSystemExistingRoadsState.Default,   ZoneToolSystemExistingRoadsState.Selecting), StartDragSelect  },
-                    { (ZoneToolSystemExistingRoadsState.Selecting, ZoneToolSystemExistingRoadsState.Selecting), KeepDragSelect   },
-                    { (ZoneToolSystemExistingRoadsState.Selecting, ZoneToolSystemExistingRoadsState.Selected),  StopDragSelect   },
-                });
-
-            // Ensure the tool is registered only once.
-            List<ToolBaseSystem> tools = m_ToolSystem.tools;
-            ToolBaseSystem? existing = null;
-            foreach (ToolBaseSystem tool in tools)
+        protected override void OnDestroy()
+        {
+            if (m_Selected.IsCreated)
             {
-                if (tool == this)
-                {
-                    existing = tool;
-                    break;
-                }
+                m_Selected.Dispose();
             }
 
-            if (existing != null)
-            {
-                tools.Remove(this);
-            }
-
-            tools.Add(this);
-
-            Mod.s_Log.Info($"Done creating {toolID}.");
+            base.OnDestroy();
         }
 
         protected override void OnStartRunning()
         {
-            Mod.s_Log.Info($"Started running tool {toolID}");
             base.OnStartRunning();
 
             toolEnabled = true;
 
-            // Enable Apply (LMB) and Secondary Apply (RMB) actions
             applyAction.shouldBeEnabled = true;
             secondaryApplyAction.shouldBeEnabled = true;
 
-            m_OnUpdateMemory = default;
-            workingState.lastRaycastEntity = Entity.Null;
-            workingState.lastRaycastEntities = new NativeHashSet<Entity>(32, Allocator.Persistent);
-            workingState.zoningMode = m_UISystem.CurrentZoningMode;
+            requireNet = Layer.Road;
+            requireZones = true;
+            allowUnderground = true;
 
-            m_StateMachine.Reset();
+            EnsureSafePrefabForUI();
         }
 
         protected override void OnStopRunning()
         {
-            Mod.s_Log.Info($"Stopped running tool {toolID}");
             base.OnStopRunning();
 
             toolEnabled = false;
@@ -330,153 +96,102 @@ namespace ZoningToolkit.Systems
             applyAction.shouldBeEnabled = false;
             secondaryApplyAction.shouldBeEnabled = false;
 
-            if (workingState.lastRaycastEntities.IsCreated)
-            {
-                workingState.lastRaycastEntities.Dispose();
-            }
-
-            m_OnUpdateMemory.CurrentInputDeps.Complete();
+            ClearSelection();
+            m_Hovered = Entity.Null;
         }
 
         public override void InitializeRaycast()
         {
             base.InitializeRaycast();
 
-            m_ToolRaycastSystem.typeMask = TypeMask.Lanes | TypeMask.Net;
+            m_ToolRaycastSystem.typeMask = TypeMask.Net | TypeMask.Lanes;
             m_ToolRaycastSystem.netLayerMask = Layer.Road;
-            m_ToolRaycastSystem.areaTypeMask = AreaTypeMask.Surfaces;
+        }
+
+        protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
+        {
+            base.OnGameLoadingComplete(purpose, mode);
+
+#if DEBUG
+            DebugDumpPrefabIds("Crosswalk");
+            DebugDumpPrefabIds("Wide");
+            DebugDumpPrefabIds("Sidewalk");
+            DebugDumpPrefabIds("Fence");
+#endif
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            // If focus changed or the tool isn't active, do nothing.
-            if (m_FocusChanged || !toolEnabled)
+            EnsureSafePrefabForUI();
+
+            if (!toolEnabled)
             {
                 return inputDeps;
             }
 
             applyMode = ApplyMode.Clear;
 
-            requireZones = true;
-            requireAreas |= AreaTypeMask.Lots;
-
-            // Keep component lookups fresh.
-            m_TypeHandle.__UpdateComponents(ref CheckedStateRef);
-
-            m_OnUpdateMemory = new OnUpdateMemory
-            {
-                CurrentInputDeps = inputDeps,
-                CommandBuffer = m_ToolOutputBarrier.CreateCommandBuffer()
-            };
-
-            // RMB / Secondary Apply: cycle zoning mode
             if (secondaryApplyAction.WasPressedThisFrame())
             {
                 CycleZoningMode();
             }
 
-            // LMB / Apply: drive the click/drag state machine
-            applyMode = m_StateMachine.Transition(applyAction);
+            UpdateHover();
 
-            m_ToolOutputBarrier.AddJobHandleForProducer(m_OnUpdateMemory.CurrentInputDeps);
-            return m_OnUpdateMemory.CurrentInputDeps;
+            if (applyAction.WasPressedThisFrame() || applyAction.IsPressed())
+            {
+                AddHoveredToSelection();
+            }
+
+            if (applyAction.WasReleasedThisFrame())
+            {
+                ApplySelection();
+            }
+
+            return inputDeps;
         }
 
         public override PrefabBase GetPrefab()
         {
-            // Tool doesn't use a prefab directly; returning null is OK in practice.
-            return null!;
+            return GetSafePrefabForUI();
         }
 
         public override bool TrySetPrefab(PrefabBase prefab)
         {
-            // No prefab selection support for this tool.
             return false;
         }
 
         internal void EnableTool()
         {
-            if (!toolEnabled)
-            {
-                toolEnabled = true;
+            EnsureSafePrefabForUI();
 
-                ToolBaseSystem current = m_ToolSystem.activeTool;
-                m_PreviousToolSystem = current;
+            m_PreviousTool = m_ZTToolSystem.activeTool;
+            m_ZTToolSystem.activeTool = this;
 
-                // If the current tool is the road placement tool, do NOT return to it later
-                // (it pops open the vanilla road UI and can steal LMB behavior).
-                if (current is NetToolSystem)
-                {
-                    m_PreviousToolSystem = FindReturnTool();
-                }
+            toolEnabled = true;
 
-                m_ToolSystem.activeTool = this;
-            }
+            Mod.s_Log.Info($"{Mod.ModTag} ExistingRoads enabled");
         }
 
         internal void DisableTool()
         {
-            if (toolEnabled)
+            toolEnabled = false;
+
+            ClearSelection();
+            m_Hovered = Entity.Null;
+
+            ToolBaseSystem? returnTool = m_PreviousTool;
+            if (returnTool == null || returnTool == this)
             {
-                toolEnabled = false;
-
-                if (m_ToolSystem.activeTool == this)
-                {
-                    ToolBaseSystem? returnTool = m_PreviousToolSystem;
-
-                    if (returnTool == null || returnTool == this || returnTool is NetToolSystem)
-                    {
-                        returnTool = FindReturnTool();
-                    }
-
-                    if (returnTool != null)
-                    {
-                        m_ToolSystem.activeTool = returnTool;
-                    }
-                }
-
-                m_PreviousToolSystem = null;
+                returnTool = m_NetToolSystem;
             }
+
+            m_ZTToolSystem.activeTool = returnTool;
+
+            m_PreviousTool = null;
+
+            Mod.s_Log.Info($"{Mod.ModTag} ExistingRoads disabled");
         }
-
-        private ToolBaseSystem? FindReturnTool()
-        {
-            // Prefer any non-Net tool (avoids popping open the road UI when turning our helper off).
-            List<ToolBaseSystem> tools = m_ToolSystem.tools;
-
-            ToolBaseSystem? fallback = null;
-
-            foreach (ToolBaseSystem tool in tools)
-            {
-                if (tool == null || tool == this)
-                {
-                    continue;
-                }
-
-                fallback ??= tool;
-
-                if (tool is not NetToolSystem)
-                {
-                    return tool;
-                }
-            }
-
-            // Fallback: any other tool at all.
-            if (fallback != null)
-            {
-                return fallback;
-            }
-
-            // Last resort: if active tool isn't us, return it.
-            ToolBaseSystem active = m_ToolSystem.activeTool;
-            if (active != null && active != this)
-            {
-                return active;
-            }
-
-            return null;
-        }
-
 
         private void CycleZoningMode()
         {
@@ -493,262 +208,142 @@ namespace ZoningToolkit.Systems
             m_UISystem.SetZoningModeFromTool(next);
         }
 
-        // --- State-machine callbacks --------------------------------------------------------
-
-        private JobHandle StopDragSelect(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
+        private void UpdateHover()
         {
-            JobHandle job = new UpdateZoningInfo
+            Entity newHovered = TryGetRaycastRoad(out Entity e) ? e : Entity.Null;
+            if (newHovered == m_Hovered)
             {
-                CurveLookup = m_TypeHandle.__Game_Net_Curve_RW_ComponentLookup,
-                ZoningInfoLookup = m_TypeHandle.__Game_Zoning_Info_RW_ComponentLookup,
-                CommandBuffer = m_OnUpdateMemory.CommandBuffer,
-                EntitySet = workingState.lastRaycastEntities,
-                SubBlockBufferLookup = m_TypeHandle.__Game_SubBlock_RW_BufferLookup,
-                EdgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup,
-                NewZoningInfo = new ZoningInfo
-                {
-                    zoningMode = workingState.zoningMode
-                }
-            }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
-
-            m_OnUpdateMemory.CurrentInputDeps =
-                JobHandle.CombineDependencies(m_OnUpdateMemory.CurrentInputDeps, job);
-            return m_OnUpdateMemory.CurrentInputDeps;
-        }
-
-        private JobHandle HoverUpdate(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
-        {
-            EntityHighlighted(previous, next);
-            return m_OnUpdateMemory.CurrentInputDeps;
-        }
-
-        private JobHandle StartDragSelect(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
-        {
-            SelectEntity(previous, next);
-            return m_OnUpdateMemory.CurrentInputDeps;
-        }
-
-        private JobHandle KeepDragSelect(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
-        {
-            SelectEntity(previous, next);
-            return m_OnUpdateMemory.CurrentInputDeps;
-        }
-
-        private JobHandle SelectEntity(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
-        {
-            if (GetRaycastResult(out Entity entity, out RaycastHit _))
-            {
-                if (!workingState.lastRaycastEntities.Contains(entity))
-                {
-                    workingState.lastRaycastEntities.Add(entity);
-
-                    JobHandle job = new HighlightEntitiesJob
-                    {
-                        EntityToHighlight = entity,
-                        CommandBuffer = m_OnUpdateMemory.CommandBuffer,
-                        EdgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup
-                    }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
-
-                    m_OnUpdateMemory.CurrentInputDeps =
-                        JobHandle.CombineDependencies(job, m_OnUpdateMemory.CurrentInputDeps);
-                }
+                return;
             }
 
-            return m_OnUpdateMemory.CurrentInputDeps;
+            m_Hovered = newHovered;
         }
 
-        private JobHandle EntityHighlighted(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
+        private void AddHoveredToSelection()
         {
-            Entity previousEntity = workingState.lastRaycastEntity;
-
-            if (GetRaycastResult(out Entity hitEntity, out RaycastHit _))
+            if (m_Hovered == Entity.Null)
             {
-                if (workingState.lastRaycastEntity != hitEntity)
-                {
-                    // Unhighlight previous.
-                    if (previousEntity != Entity.Null)
-                    {
-                        JobHandle unhighlight = new UnHighlightEntitiesJob
-                        {
-                            CommandBuffer = m_OnUpdateMemory.CommandBuffer,
-                            EntityToUnhighlight = previousEntity,
-                            EdgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup
-                        }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
+                return;
+            }
 
-                        m_OnUpdateMemory.CurrentInputDeps =
-                            JobHandle.CombineDependencies(unhighlight, m_OnUpdateMemory.CurrentInputDeps);
-                    }
+            if (!EntityManager.Exists(m_Hovered))
+            {
+                return;
+            }
 
-                    // Highlight new.
-                    workingState.lastRaycastEntity = hitEntity;
+            if (!m_Selected.Contains(m_Hovered))
+            {
+                m_Selected.Add(m_Hovered);
+                m_SelectedCount++;
+            }
+        }
 
-                    JobHandle highlight = new HighlightEntitiesJob
-                    {
-                        EntityToHighlight = workingState.lastRaycastEntity,
-                        CommandBuffer = m_OnUpdateMemory.CommandBuffer,
-                        EdgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup
-                    }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
+        private void ClearSelection()
+        {
+            m_Selected.Clear();
+            m_SelectedCount = 0;
+        }
 
-                    m_OnUpdateMemory.CurrentInputDeps =
-                        JobHandle.CombineDependencies(highlight, m_OnUpdateMemory.CurrentInputDeps);
-                }
+        private void ApplySelection()
+        {
+            if (m_SelectedCount == 0)
+            {
+                return;
+            }
+
+            ZoningMode mode = m_UISystem.CurrentZoningMode;
+
+            EntityCommandBuffer ecb = m_ToolOutputBarrier.CreateCommandBuffer();
+
+            foreach (Entity roadEntity in m_Selected)
+            {
+                AddOrSetZoningInfo(ecb, roadEntity, mode);
+                TagSubBlocksForUpdate(ecb, roadEntity);
+            }
+
+            ClearSelection();
+        }
+
+        private bool TryGetRaycastRoad(out Entity entity)
+        {
+            entity = Entity.Null;
+
+            if (!base.GetRaycastResult(out Entity hit, out RaycastHit _))
+            {
+                return false;
+            }
+
+            if (!EntityManager.HasComponent<Edge>(hit))
+            {
+                return false;
+            }
+
+            if (!EntityManager.HasBuffer<SubBlock>(hit))
+            {
+                return false;
+            }
+
+#if DEBUG
+            // Dump components on the hit road entity so to see PrefabRef/Owner/etc.
+            this.listEntityComponents(hit);
+
+            // If it has PrefabRef, dump the prefab entity too.
+            if (EntityManager.TryGetComponent<PrefabRef>(hit, out var pr))
+            {
+                Mod.s_Log.Debug($"{Mod.ModTag} Hit PrefabRef entity: {pr.m_Prefab}");
+                this.listEntityComponents(pr.m_Prefab);
+            }
+#endif
+
+            entity = hit;
+            return true;
+        }
+
+        private void AddOrSetZoningInfo(EntityCommandBuffer ecb, Entity owner, ZoningMode mode)
+        {
+            ZoningInfo zi = new ZoningInfo { zoningMode = mode };
+
+            if (EntityManager.HasComponent<ZoningInfo>(owner))
+            {
+                ecb.SetComponent(owner, zi);
             }
             else
             {
-                // Nothing under cursor: clear highlight.
-                workingState.lastRaycastEntity = Entity.Null;
+                ecb.AddComponent(owner, zi);
+            }
+        }
 
-                if (previousEntity != Entity.Null)
+        private void TagSubBlocksForUpdate(EntityCommandBuffer ecb, Entity roadEntity)
+        {
+            if (!EntityManager.HasBuffer<SubBlock>(roadEntity))
+            {
+                return;
+            }
+
+            DynamicBuffer<SubBlock> subBlocks = EntityManager.GetBuffer<SubBlock>(roadEntity, isReadOnly: true);
+
+            for (int i = 0; i < subBlocks.Length; i++)
+            {
+                Entity blockEntity = subBlocks[i].m_SubBlock;
+                if (blockEntity == Entity.Null)
                 {
-                    JobHandle unhighlight = new UnHighlightEntitiesJob
-                    {
-                        CommandBuffer = m_OnUpdateMemory.CommandBuffer,
-                        EntityToUnhighlight = previousEntity,
-                        EdgeLookup = m_TypeHandle.__Game_Edge_RW_ComponentLookup
-                    }.Schedule(m_OnUpdateMemory.CurrentInputDeps);
-
-                    m_OnUpdateMemory.CurrentInputDeps =
-                        JobHandle.CombineDependencies(unhighlight, m_OnUpdateMemory.CurrentInputDeps);
+                    continue;
                 }
-            }
 
-            return m_OnUpdateMemory.CurrentInputDeps;
-        }
+                if (!EntityManager.Exists(blockEntity))
+                {
+                    continue;
+                }
 
-        // --- Component lookups --------------------------------------------------------------
+                if (!EntityManager.HasComponent<ZoningInfoUpdated>(blockEntity))
+                {
+                    ecb.AddComponent<ZoningInfoUpdated>(blockEntity);
+                }
 
-        private struct TypeHandle
-        {
-            [ReadOnly]
-            public ComponentLookup<Curve> __Game_Net_Curve_RW_ComponentLookup;
-            public ComponentLookup<ZoningInfo> __Game_Zoning_Info_RW_ComponentLookup;
-            public BufferLookup<SubBlock> __Game_SubBlock_RW_BufferLookup;
-            public ComponentLookup<Block> __Game_Block_RW_ComponentLookup;
-            public ComponentLookup<Edge> __Game_Edge_RW_ComponentLookup;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void __AssignHandles(ref SystemState state)
-            {
-                __Game_Net_Curve_RW_ComponentLookup = state.GetComponentLookup<Curve>(isReadOnly: true);
-                __Game_Zoning_Info_RW_ComponentLookup = state.GetComponentLookup<ZoningInfo>(isReadOnly: false);
-                __Game_SubBlock_RW_BufferLookup = state.GetBufferLookup<SubBlock>(isReadOnly: false);
-                __Game_Block_RW_ComponentLookup = state.GetComponentLookup<Block>(isReadOnly: true);
-                __Game_Edge_RW_ComponentLookup = state.GetComponentLookup<Edge>(isReadOnly: false);
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void __UpdateComponents(ref SystemState state)
-            {
-                __Game_Net_Curve_RW_ComponentLookup.Update(ref state);
-                __Game_Zoning_Info_RW_ComponentLookup.Update(ref state);
-                __Game_SubBlock_RW_BufferLookup.Update(ref state);
-                __Game_Block_RW_ComponentLookup.Update(ref state);
-                __Game_Edge_RW_ComponentLookup.Update(ref state);
-            }
-        }
-    }
-
-    // --- Simple state machine for click / drag behaviour -------------------------------------
-
-    internal delegate JobHandle StateCallback(
-        ZoneToolSystemExistingRoadsState previousState,
-        ZoneToolSystemExistingRoadsState nextState);
-
-    internal enum ZoneToolSystemExistingRoadsState
-    {
-        Default,
-        Selecting,
-        Selected
-    }
-
-    internal sealed class ZoneToolSystemExistingRoadsStateMachine
-    {
-        private ZoneToolSystemExistingRoadsState m_CurrentState;
-        private readonly Dictionary<(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next), StateCallback> m_Transitions;
-
-        internal ZoneToolSystemExistingRoadsStateMachine(
-            Dictionary<(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next), StateCallback> transitions)
-        {
-            m_CurrentState = ZoneToolSystemExistingRoadsState.Default;
-            m_Transitions = transitions;
-        }
-
-        internal ApplyMode Transition(IProxyAction applyAction)
-        {
-            ZoneToolSystemExistingRoadsState previousState = m_CurrentState;
-
-            switch (m_CurrentState)
-            {
-                case ZoneToolSystemExistingRoadsState.Default:
-                    if (applyAction.WasPressedThisFrame() && applyAction.WasReleasedThisFrame())
-                    {
-                        // Single quick click.
-                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selected;
-                        TryRunCallback(previousState, m_CurrentState);
-                        return ApplyMode.Apply;
-                    }
-                    else if (applyAction.WasPressedThisFrame() && !applyAction.WasReleasedThisFrame())
-                    {
-                        // Press start (drag select).
-                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selecting;
-                        TryRunCallback(previousState, m_CurrentState);
-                        return ApplyMode.None;
-                    }
-                    else if (applyAction.IsPressed())
-                    {
-                        // Holding mouse while dragging.
-                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selecting;
-                        TryRunCallback(previousState, m_CurrentState);
-                        return ApplyMode.None;
-                    }
-                    else if (applyAction.WasReleasedThisFrame())
-                    {
-                        // Mouse released -> apply.
-                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selected;
-                        TryRunCallback(previousState, m_CurrentState);
-                        return ApplyMode.Apply;
-                    }
-
-                    break;
-
-                case ZoneToolSystemExistingRoadsState.Selecting:
-                    if (applyAction.IsPressed())
-                    {
-                        // Continue drag select.
-                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selecting;
-                        TryRunCallback(previousState, m_CurrentState);
-                        return ApplyMode.None;
-                    }
-                    else if (!applyAction.IsPressed() && applyAction.WasReleasedThisFrame())
-                    {
-                        // Drag finished; selection is done, but zoning will be applied by Selected state.
-                        m_CurrentState = ZoneToolSystemExistingRoadsState.Selected;
-                        TryRunCallback(previousState, m_CurrentState);
-                        return ApplyMode.None;
-                    }
-
-                    break;
-
-                case ZoneToolSystemExistingRoadsState.Selected:
-                    // After applying, go back to idle.
-                    m_CurrentState = ZoneToolSystemExistingRoadsState.Default;
-                    TryRunCallback(previousState, m_CurrentState);
-                    return ApplyMode.Apply;
-            }
-
-            return ApplyMode.None;
-        }
-
-        internal void Reset()
-        {
-            m_CurrentState = ZoneToolSystemExistingRoadsState.Default;
-        }
-
-        private void TryRunCallback(ZoneToolSystemExistingRoadsState previous, ZoneToolSystemExistingRoadsState next)
-        {
-            if (m_Transitions.TryGetValue((previous, next), out StateCallback callback))
-            {
-                callback(previous, next);
+                if (!EntityManager.HasComponent<Updated>(blockEntity))
+                {
+                    ecb.AddComponent<Updated>(blockEntity);
+                }
             }
         }
     }

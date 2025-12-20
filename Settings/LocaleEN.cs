@@ -38,8 +38,8 @@ namespace ZoningToolkit
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "Mod name" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModName)),     "Display name of this mod." },
 
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModVersion)), "Version" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Current Zone Tools version." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.VersionText)), "Version" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.VersionText)),  "Current Zone Tools version." },
 
                 // About links
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.OpenParadox)), "Paradox Mods" },
@@ -84,7 +84,8 @@ namespace ZoningToolkit
                 { "ZoneTools.UI.UpdateRoad", "Update Road" },
 
                 { "ZoneTools.UI.Tooltip.UpdateRoad",
-                  "Toggle update tool (for existing roads)." },
+                  "Toggle update tool (for existing roads).\n\n" +
+                  "If it won’t enable, open any road build tool once." },
 
                 { "ZoneTools.UI.Tooltip.ModeDefault", "Both (default)" },
                 { "ZoneTools.UI.Tooltip.ModeLeft",    "Left"          },

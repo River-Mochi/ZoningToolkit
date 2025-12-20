@@ -5,14 +5,16 @@
 namespace ZoningToolkit.Utils
 {
     using System.Runtime.CompilerServices;
+    using Game.Tools;
     using Game.UI;
+    using Unity.Collections;
     using Unity.Entities;
-    using ZoningToolkit.Systems;
 
     public static class EntityUtils
     {
+        // Works for your tool systems (ZoneToolSystemExistingRoads is a ToolBaseSystem).
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void listEntityComponents(this ZoneToolSystemCore system, Entity entity)
+        public static void listEntityComponents(this ToolBaseSystem system, Entity entity)
         {
 #if DEBUG
             DumpEntityComponents(system.EntityManager, entity);
@@ -22,6 +24,7 @@ namespace ZoningToolkit.Utils
 #endif
         }
 
+        // Works for UI systems too.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void listEntityComponents(this UISystemBase uiSystemBase, Entity entity)
         {
@@ -33,48 +36,22 @@ namespace ZoningToolkit.Utils
 #endif
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void listEntityComponentsInQuery(this ZoneToolSystemCore system, EntityQuery entityQuery)
-        {
-#if DEBUG
-            NativeArray<Entity> entities = entityQuery.ToEntityArray(Allocator.Temp);
-            try
-            {
-                for (int i = 0; i < entities.Length; i++)
-                {
-                    Entity entity = entities[i];
-
-                    Mod.s_Log.Debug("****** Listing entity components ******");
-                    system.listEntityComponents(entity);
-
-                    Mod.s_Log.Debug("***** Printing owner info ******");
-                    if (system.ownerComponentLookup.HasComponent(entity))
-                    {
-                        Owner owner = system.ownerComponentLookup[entity];
-                        system.listEntityComponents(owner.m_Owner);
-                    }
-                }
-            }
-            finally
-            {
-                entities.Dispose();
-            }
-#else
-            _ = system;
-            _ = entityQuery;
-#endif
-        }
-
 #if DEBUG
         private static void DumpEntityComponents(EntityManager em, Entity entity)
         {
+            if (entity == Entity.Null || !em.Exists(entity))
+            {
+                Mod.s_Log.Debug($"{Mod.ModTag} EntityUtils: entity is Null or does not exist");
+                return;
+            }
+
             NativeArray<ComponentType> types = em.GetComponentTypes(entity, Allocator.Temp);
             try
             {
                 for (int i = 0; i < types.Length; i++)
                 {
                     ComponentType type = types[i];
-                    Mod.s_Log.Debug($"Entity has component {type.GetManagedType()}");
+                    Mod.s_Log.Debug($"{Mod.ModTag} Entity has component {type.GetManagedType()}");
                 }
             }
             finally

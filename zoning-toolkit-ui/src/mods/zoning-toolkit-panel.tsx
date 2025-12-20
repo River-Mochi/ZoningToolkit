@@ -98,7 +98,10 @@ export class ZoningToolkitPanelInternal extends React.Component {
         );
 
         return (
-            <Draggable bounds="parent" grid={[5, 5]}>
+            <Draggable bounds="parent" grid={[5, 5]}
+            // prevent moz-selection warning
+                enableUserSelectHack={false}>
+
                 <Panel
                     className={panelStyles.panel}
                     header="Zone Tools"

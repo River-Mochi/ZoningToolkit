@@ -59,7 +59,14 @@ namespace ZoningToolkit
         public string ModName => Mod.ModName;
 
         [SettingsUISection(kAboutTab, kAboutGroup)]
-        public string ModVersion => Mod.ModVersion;
+        public string VersionText =>
+#if DEBUG
+            Mod.ModVersion + " (DEBUG)";
+#else
+    Mod.ModVersion;
+#endif
+
+
 
         [SettingsUIButtonGroup(kAboutLinksGroup)]
         [SettingsUIButton]

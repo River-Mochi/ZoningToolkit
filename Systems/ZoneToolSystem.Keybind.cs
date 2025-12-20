@@ -13,36 +13,46 @@ namespace ZoningToolkit.Systems
     /// </summary>
     public sealed partial class ZoneToolSystemKeybind : GameSystemBase
     {
-        private ZoneToolBridgeUI m_UISystem = null!;
+        private ZoneToolBridgeUI? m_UISystem;
         private bool m_LoggedMissingAction;
+        private bool m_LoggedMissingUISystem;
 
         protected override void OnCreate()
         {
             base.OnCreate();
 
             m_UISystem = World.GetOrCreateSystemManaged<ZoneToolBridgeUI>();
-            Mod.s_Log.Info("[ZT] ZoneToolSystemKeybind created.");
+            Mod.s_Log.Info($"{Mod.ModTag} ZoneToolSystemKeybind created.");
         }
 
         protected override void OnUpdate()
         {
+            if (m_UISystem == null)
+            {
+                if (!m_LoggedMissingUISystem)
+                {
+                    m_LoggedMissingUISystem = true;
+                    Mod.s_Log.Warn($"{Mod.ModTag} ZoneToolSystemKeybind: UI system is null in OnUpdate (unexpected).");
+                }
+
+                return;
+            }
+
             ProxyAction? togglePanelAction = Mod.TogglePanelAction;
             if (togglePanelAction == null)
             {
                 if (!m_LoggedMissingAction)
                 {
                     m_LoggedMissingAction = true;
-                    Mod.s_Log.Warn("[ZT] ZoneToolSystemKeybind: TogglePanelAction is null in OnUpdate.");
+                    Mod.s_Log.Warn($"{Mod.ModTag} ZoneToolSystemKeybind: TogglePanelAction is null in OnUpdate.");
                 }
 
                 return;
             }
 
-            // Fires once on the frame the keybinding action is pressed.
             if (togglePanelAction.WasPressedThisFrame())
             {
-                // This used to be Info() and could be noisy. Keep it in debug logs only.
-                Mod.Debug("[ZT] ZoneToolSystemKeybind: togglePanelAction.WasPressedThisFrame() -> toggling panel.");
+                Mod.Debug($"{Mod.ModTag} ZoneToolSystemKeybind: toggle pressed -> toggling panel.");
                 m_UISystem.TogglePanelFromHotkey();
             }
         }

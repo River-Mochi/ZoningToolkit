@@ -12,7 +12,7 @@
     "delete": "npx create-csii-ui-mod delete",
     "clean": "npx create-csii-ui-mod clean",
     "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\""
-  },
+ },
   "exclude": [
     "node_modules",
     "build"
@@ -35,7 +35,7 @@
     "globals": "^16.5.0",
     "mini-css-extract-plugin": "2.7.0",
     "sass": "^1.69.5",
-    "sass-loader": "13.2.0",
+    "sass-loader": "14.2.1",
     "style-loader": "^3.3.3",
     "swc-loader": "0.2.3",
     "terser-webpack-plugin": "^5.3.10",

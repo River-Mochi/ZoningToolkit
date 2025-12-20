@@ -119,7 +119,6 @@ namespace ZoningToolkit.Systems
 
             EntityCommandBuffer ecb = m_ModificationBarrier4B.CreateCommandBuffer();
 
-            // Read settings ONCE per update (cheap + consistent for all jobs this frame).
             bool protectOccupiedCells = Mod.Settings?.ProtectOccupiedCells ?? true;
             bool protectZonedCells = Mod.Settings?.ProtectZonedCells ?? false;
 
@@ -130,7 +129,6 @@ namespace ZoningToolkit.Systems
 
             JobHandle deps = Dependency;
 
-            // Collect curves that were deleted this frame
             JobHandle collectDeletedJob = new CollectDeletedCurves
             {
                 ownerTypeHandle = ownerTypeHandle,
@@ -143,7 +141,6 @@ namespace ZoningToolkit.Systems
 
             deps = JobHandle.CombineDependencies(deps, collectDeletedJob);
 
-            // Newly created blocks
             if (!m_NewBlocksQuery.IsEmptyIgnoreFilter)
             {
                 JobHandle job = new UpdateZoneData
@@ -169,7 +166,6 @@ namespace ZoningToolkit.Systems
                 deps = JobHandle.CombineDependencies(deps, job);
             }
 
-            // Existing blocks flagged for zoning update
             if (!m_UpdateBlocksQuery.IsEmptyIgnoreFilter)
             {
                 JobHandle job = new UpdateZoningInfoJob
@@ -217,6 +213,24 @@ namespace ZoningToolkit.Systems
             };
         }
 
+        private static ZoningInfo DefaultZI() => new ZoningInfo { zoningMode = ZoningMode.Default };
+
+        private static void AddOrSetZoningInfo(
+            EntityCommandBuffer ecb,
+            ComponentLookup<ZoningInfo> lookup,
+            Entity owner,
+            ZoningInfo zi)
+        {
+            if (lookup.HasComponent(owner))
+            {
+                ecb.SetComponent(owner, zi);
+            }
+            else
+            {
+                ecb.AddComponent(owner, zi);
+            }
+        }
+
         private struct UpdateZoningInfoJob : IJobChunk
         {
             [ReadOnly] public ZoningMode zoningMode;
@@ -257,11 +271,6 @@ namespace ZoningToolkit.Systems
                         continue;
                     }
 
-                    if (!zoningInfoUpdateComponentLookup.HasComponent(entity))
-                    {
-                        continue;
-                    }
-
                     if (!curveComponentLookup.HasComponent(owner.m_Owner))
                     {
                         continue;
@@ -282,7 +291,7 @@ namespace ZoningToolkit.Systems
                     if (!blocked)
                     {
                         BlockUtils.editBlockSizes(dot, zi, validArea, block, entity, entityCommandBuffer);
-                        entityCommandBuffer.AddComponent(owner.m_Owner, zi);
+                        // No need to write ZoningInfo back to owner here; we're not changing it.
                     }
 
                     entityCommandBuffer.RemoveComponent<ZoningInfoUpdated>(entity);
@@ -349,12 +358,12 @@ namespace ZoningToolkit.Systems
                         }
                         else
                         {
-                            zi = new ZoningInfo { zoningMode = ZoningMode.Default };
+                            zi = DefaultZI();
                         }
                     }
                     else
                     {
-                        if (entitiesByStartPoint.TryGetValue(curve.m_Bezier.a.xz, out Entity s) &
+                        if (entitiesByStartPoint.TryGetValue(curve.m_Bezier.a.xz, out Entity s) &&
                             entitiesByEndPoint.TryGetValue(curve.m_Bezier.d.xz, out Entity e))
                         {
                             if (s == e && zoningInfoComponentLookup.HasComponent(s))
@@ -365,11 +374,12 @@ namespace ZoningToolkit.Systems
                             {
                                 ZoningInfo sZI = zoningInfoComponentLookup.HasComponent(s)
                                     ? zoningInfoComponentLookup[s]
-                                    : default;
+                                    : DefaultZI();
                                 ZoningInfo eZI = zoningInfoComponentLookup.HasComponent(e)
                                     ? zoningInfoComponentLookup[e]
-                                    : default;
-                                zi = sZI.Equals(eZI) ? sZI : new ZoningInfo { zoningMode = ZoningMode.Default };
+                                    : DefaultZI();
+
+                                zi = sZI.Equals(eZI) ? sZI : DefaultZI();
                             }
                         }
                         else if (entitiesByEndPoint.TryGetValue(curve.m_Bezier.d.xz, out Entity eOnly) &&
@@ -406,7 +416,9 @@ namespace ZoningToolkit.Systems
                     }
 
                     BlockUtils.editBlockSizes(dot, zi, validArea, block, entity, entityCommandBuffer);
-                    entityCommandBuffer.AddComponent(owner.m_Owner, zi);
+
+                    // Safe: add if missing, set if present.
+                    AddOrSetZoningInfo(entityCommandBuffer, zoningInfoComponentLookup, owner.m_Owner, zi);
                 }
             }
         }

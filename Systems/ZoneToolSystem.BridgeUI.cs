@@ -26,10 +26,10 @@ namespace ZoningToolkit.Systems
     {
         private const string kGroup = "zoning_adjuster_ui_namespace";
 
-        private ZoneToolSystemCore m_ZoningSystem = null!;
-        private ToolSystem m_ToolSystem = null!;
-        private ZoneToolSystemExistingRoads m_Tool = null!;
-        private PhotoModeRenderSystem m_PhotoMode = null!;
+        private ZoneToolSystemCore? m_ZoningSystem;
+        private ToolSystem? m_ToolSystem;
+        private ZoneToolSystemExistingRoads? m_Tool;
+        private PhotoModeRenderSystem? m_PhotoMode;
 
         private UIState m_UIState;
 
@@ -59,14 +59,18 @@ namespace ZoningToolkit.Systems
             m_AutoOpenedForRoadTools = false;
 
             // React to tool / prefab changes.
-            m_ToolSystem.EventPrefabChanged =
-                (Action<PrefabBase>)Delegate.Combine(
-                    m_ToolSystem.EventPrefabChanged,
-                    new Action<PrefabBase>(OnPrefabChanged));
-            m_ToolSystem.EventToolChanged =
-                (Action<ToolBaseSystem>)Delegate.Combine(
-                    m_ToolSystem.EventToolChanged,
-                    new Action<ToolBaseSystem>(OnToolChanged));
+            if (m_ToolSystem != null)
+            {
+                m_ToolSystem.EventPrefabChanged =
+                    (Action<PrefabBase>)Delegate.Combine(
+                        m_ToolSystem.EventPrefabChanged,
+                        new Action<PrefabBase>(OnPrefabChanged));
+
+                m_ToolSystem.EventToolChanged =
+                    (Action<ToolBaseSystem>)Delegate.Combine(
+                        m_ToolSystem.EventToolChanged,
+                        new Action<ToolBaseSystem>(OnToolChanged));
+            }
 
             // C# -> UI bindings.
             AddUpdateBinding(new GetterValueBinding<string>(
@@ -87,7 +91,7 @@ namespace ZoningToolkit.Systems
             AddUpdateBinding(new GetterValueBinding<bool>(
                 kGroup,
                 "photomode",
-                () => m_PhotoMode.Enabled));
+                () => m_PhotoMode?.Enabled ?? false));
 
             // UI -> C# bindings.
             AddBinding(new TriggerBinding<string>(
@@ -108,7 +112,18 @@ namespace ZoningToolkit.Systems
                 enabled =>
                 {
                     Mod.Debug($"{Mod.ModTag} Zone Tools UI: tool_enabled set to {enabled}");
+
+                    // If tool refuses to enable (e.g., null-prefab safety), we must reflect reality back to UI.
                     ToggleTool(enabled);
+
+                    if (m_Tool != null)
+                    {
+                        m_UIState.toolEnabled = m_Tool.toolEnabled;
+                    }
+                    else
+                    {
+                        m_UIState.toolEnabled = false;
+                    }
                 }));
 
             // FAB button toggle: same behaviour as Shift+Z keybind.
@@ -135,7 +150,7 @@ namespace ZoningToolkit.Systems
             Mod.Debug($"{Mod.ModTag} TogglePanelFromHotkey: m_UIState.visible = {m_UIState.visible}");
 
             // If the panel is being hidden, also disable the update tool so input/overlays stop.
-            if (!newVisible && m_Tool.toolEnabled)
+            if (!newVisible && m_Tool != null && m_Tool.toolEnabled)
             {
                 Mod.Debug($"{Mod.ModTag} TogglePanelFromHotkey: panel hidden -> disabling update tool.");
                 ToggleTool(false);
@@ -156,6 +171,11 @@ namespace ZoningToolkit.Systems
 
         private void ToggleTool(bool enable)
         {
+            if (m_Tool == null)
+            {
+                return;
+            }
+
             if (enable)
             {
                 m_Tool.EnableTool();
@@ -168,6 +188,11 @@ namespace ZoningToolkit.Systems
 
         private void OnToolChanged(ToolBaseSystem tool)
         {
+            if (m_ToolSystem == null || m_Tool == null)
+            {
+                return;
+            }
+
             // Always disable the existing-road helper when a zonable road building tool is selected.
             bool isZonableRoadTool = IsZonableRoadTool(tool);
 
@@ -185,6 +210,11 @@ namespace ZoningToolkit.Systems
 
         private void OnPrefabChanged(PrefabBase prefab)
         {
+            if (m_ToolSystem == null)
+            {
+                return;
+            }
+
             // Prefab changes matter mainly while NetTool is active (switching small road <-> highway, etc.).
             if (m_ToolSystem.activeTool is not NetToolSystem)
             {
@@ -201,6 +231,11 @@ namespace ZoningToolkit.Systems
         protected override void OnUpdate()
         {
             base.OnUpdate();
+
+            if (m_ToolSystem == null || m_Tool == null || m_PhotoMode == null || m_ZoningSystem == null)
+            {
+                return;
+            }
 
             // If the panel is not visible (or photo mode is on), the update tool must not remain active.
             if ((!m_UIState.visible || m_PhotoMode.Enabled) && m_Tool.toolEnabled)
@@ -223,12 +258,7 @@ namespace ZoningToolkit.Systems
             }
 
             // Sync UI -> tool/system.
-            if (m_UIState.zoningMode != m_Tool.workingState.zoningMode)
-            {
-                ZoneToolSystemExistingRoads.WorkingState ws = m_Tool.workingState;
-                ws.zoningMode = m_UIState.zoningMode;
-                m_Tool.workingState = ws;
-            }
+            // Existing-roads tool reads mode from UI system / core; no per-tool state sync needed.
 
             if (m_UIState.zoningMode != m_ZoningSystem.zoningMode)
             {
@@ -246,6 +276,11 @@ namespace ZoningToolkit.Systems
 
         private static bool IsZonableRoadTool(ToolBaseSystem tool)
         {
+            if (tool == null)
+            {
+                return false;
+            }
+
             if (tool is not NetToolSystem netTool)
             {
                 return false;
@@ -288,7 +323,7 @@ namespace ZoningToolkit.Systems
                     m_UIState.visible = false;
                     m_AutoOpenedForRoadTools = false;
 
-                    if (m_Tool.toolEnabled)
+                    if (m_Tool != null && m_Tool.toolEnabled)
                     {
                         ToggleTool(false);
                         m_UIState.toolEnabled = false;

@@ -37,8 +37,8 @@ namespace ZoningToolkit
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModName)),    "Nom du mod" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModName)),     "Nom affiché de ce mod." },
 
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ModVersion)), "Version" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ModVersion)),  "Version actuelle de Zone Tools." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.VersionText)), "Version" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.VersionText)),  "Version actuelle de Zone Tools." },
 
                 // About links
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.OpenParadox)), "Paradox Mods" },
